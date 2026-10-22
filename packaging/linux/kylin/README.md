@@ -77,3 +77,14 @@ objdump -T usr/bin/photocraft | grep -oE 'GLIBC_[0-9.]+' | sort -uV | tail -1
 
 `cargo xtask parity`/tests do not apply here: this directory only packages what the workspace
 already builds and tests.
+
+## Troubleshooting
+
+- The Packaging lint workflow checks everything under `packaging/` and the workflow files on
+  every push (workflow syntax via actionlint, the shell/PowerShell scripts, desktop and
+  AppStream metadata). If it fails without any job having run, it was a transient starter
+  error: re-run it from the Actions page (*Re-run failed jobs*) or push again.
+- A verify-job failure prints the last 30 log lines as check annotations; the zero-upgrade
+  assertion failing means some package got upgraded during dependency installation, which on
+  Kylin can brick the desktop (see the focal-baseline rationale above) — fix the closure
+  blacklist, never loosen the assertion.
