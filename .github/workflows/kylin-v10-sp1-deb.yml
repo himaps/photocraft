@@ -1,0 +1,310 @@
+# Kylin V10 SP1 deb packages: the glibc-2.31 baseline build that packaging/linux/package.sh
+# cannot provide (it builds on Ubuntu 22.04 and needs glibc >= 2.35). See
+# packaging/linux/kylin/README.md for what ships and why.
+#
+# Native runners (no cross compilation) inside an Ubuntu 20.04 (focal) container: focal is
+# Kylin V10 SP1's direct ancestor, so the offline closure's package names match the target
+# distro exactly. Pushes to main build automatically; a v* tag also attaches the debs to the
+# tag's release; any branch can be built on demand through workflow_dispatch.
+name: Kylin V10 SP1 deb
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kylin-v10-sp1-deb-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-deb:
+    name: Build kylin-${{ matrix.osarch }} debs
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+            osarch: amd64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            osarch: aarch64
+    # Native runners produce native builds. The container sets the glibc baseline: focal is
+    # 2.31, exactly Kylin V10 SP1's (glibc 2.31-0kylin), and everything newer (UOS/deepin,
+    # Kylin V11, Debian 11+) accepts the binaries too.
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 150
+    container: ubuntu:20.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
+
+    steps:
+      - name: Point apt at the Azure mirror and survive focal's age
+        run: |
+          set -e
+          # The runner lives on Azure: the Azure mirror is local and fast. focal has left
+          # standard support, so its Release files fail the Valid-Until check — disable it.
+          # Per-request timeouts keep a stalled mirror from hanging the job for an hour.
+          sed -i 's|http://archive.ubuntu.com|http://azure.archive.ubuntu.com|g; s|http://security.ubuntu.com|http://azure.archive.ubuntu.com|g' /etc/apt/sources.list
+          cat > /etc/apt/apt.conf.d/99photocraft-build <<'CONF'
+          Acquire::Check-Valid-Until "false";
+          Acquire::http::Timeout "30";
+          Acquire::https::Timeout "30";
+          CONF
+          cat /etc/apt/sources.list
+
+      - name: Install build dependencies
+        run: |
+          set -o pipefail
+          for attempt in 1 2 3 4; do
+            if timeout 600 apt-get update; then
+              break
+            fi
+            echo "apt-get update failed (attempt $attempt), retrying in 20s" >&2
+            [ "$attempt" = "4" ] && exit 1
+            sleep 20
+          done
+          for attempt in 1 2 3; do
+            # No cmake/perl/nasm/libclang: PhotoCraft has no aws-lc-sys or similar C sources.
+            if timeout 900 apt-get install -y --no-install-recommends -o Acquire::Retries=5 \
+              build-essential pkg-config git curl ca-certificates dpkg-dev; then
+              break
+            fi
+            echo "apt-get install failed (attempt $attempt), retrying in 30s" >&2
+            [ "$attempt" = "3" ] && exit 1
+            sleep 30
+          done
+
+      - name: Install Rust
+        # Focal ships rustc 1.75, below the workspace rust-version; rustup's own binaries run
+        # on glibc 2.17 (and rustup stable works on glibc 2.31 in general).
+        run: |
+          set -e
+          for attempt in 1 2 3; do
+            if curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable; then
+              break
+            fi
+            echo "rustup failed (attempt $attempt), retrying in 20s" >&2
+            [ "$attempt" = "3" ] && exit 1
+            sleep 20
+          done
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trust the checkout directory for git
+        # In the container the workspace is owned by a different uid than the step user, and
+        # env.sh records the build SHA through git.
+        run: git config --global --add safe.directory '*'
+
+      - name: Clone craft-fonts (pinned, same ref as release.yml)
+        run: |
+          set -e
+          git init -q /tmp/craft-fonts
+          git -C /tmp/craft-fonts remote add origin https://github.com/storytold/craft-fonts.git
+          for attempt in 1 2 3; do
+            if git -C /tmp/craft-fonts fetch -q --depth 1 origin abb83316d96aa59c1cf64784289e378fe9fa5695; then
+              break
+            fi
+            echo "craft-fonts fetch failed (attempt $attempt), retrying in 20s" >&2
+            [ "$attempt" = "3" ] && exit 1
+            sleep 20
+          done
+          git -C /tmp/craft-fonts checkout -q --detach FETCH_HEAD
+          echo "CRAFT_FONTS_DIR=/tmp/craft-fonts" >> "$GITHUB_ENV"
+
+      - name: Build and package
+        run: |
+          set -o pipefail
+          # bash -x traces every shell command with PS4 line numbers into the log, so a
+          # silent set -e death (no error text of its own) still names the failing line.
+          export PS4='+L$LINENO: '
+          bash -x packaging/linux/kylin/package.sh 2>&1 | tee kylin-build.log
+
+      - name: Upload deb artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: photocraft-kylin-${{ matrix.osarch }}
+          path: dist/release/photocraft-*-kylin-*.deb
+          if-no-files-found: error
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: photocraft-kylin-${{ matrix.osarch }}-logs
+          path: |
+            kylin-build.log
+          if-no-files-found: ignore
+
+      - name: Re-emit the failing build log tail as annotations
+        if: failure()
+        run: |
+          # The logs API answers 401/403 to anonymous readers and the job page loads
+          # its log client-side, but check-run annotations are public API. GitHub
+          # caps annotations at 10 per level per step, so the last 30 lines go out
+          # as 10 notice + 10 warning + 10 error, oldest first; every title carries
+          # its distance from the end, since identical annotations are merged. The
+          # full traced log stays available as the *-logs artifact.
+          f=kylin-build.log
+          [ -f "$f" ] || exit 0
+          tail -n 30 "$f" > /tmp/kylin-tail.txt
+          {
+            echo "### tail of \`$f\`"
+            echo '```'
+            cat /tmp/kylin-tail.txt
+            echo '```'
+          } >>"$GITHUB_STEP_SUMMARY"
+          total=$(wc -l < /tmp/kylin-tail.txt)
+          i=0
+          while IFS= read -r line; do
+            i=$((i + 1))
+            from_end=$((total - i + 1))
+            if [ "$from_end" -le 10 ]; then kind=error
+            elif [ "$from_end" -le 20 ]; then kind=warning
+            else kind=notice
+            fi
+            printf '::%s title=%s L%d-from-end::%s\n' "$kind" "$f" "$from_end" "$(printf '%s' "$line" | cut -c1-300)"
+          done < /tmp/kylin-tail.txt
+
+  verify-on-kylin:
+    name: Install and run on real Kylin V10 SP1 (amd64)
+    needs: build-deb
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # distrotwin/kylin: a real Kylin package environment bootstrapped from Kylin's public apt
+    # archive (github.com/distrotwin/kylin). v10sp1 = desktop V10 SP1 (2503), glibc 2.31,
+    # GCC 9.3, Ubuntu 20.04 blood — exactly the target machine. Pin the dated tag, as the
+    # adaptation guide requires.
+    container: ghcr.io/distrotwin/kylin:v10sp1-base-amd64-20260903
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - name: Download the deb artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: photocraft-kylin-amd64
+          path: debs
+
+      - name: Install the GUI runtime libraries a Kylin desktop provides
+        # The base container has no desktop runtime; a real Kylin desktop ships it. Installing
+        # from the Kylin archive also verifies our runtime-library assumptions (package names
+        # and versions) against the real archive.
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive timeout 600 apt-get install -y --no-install-recommends \
+            libxkbcommon0 libxkbcommon-x11-0 libwayland-client0 libx11-6 libxcursor1 \
+            libxi6 libxrandr2 libgl1 libegl1 libfontconfig1 libfreetype6
+
+      - name: Snapshot the dpkg database before installing
+        run: |
+          dpkg-query -W -f='${binary:Package}\t${Version}\t${db:Status-Abbrev}\n' 2>/dev/null \
+            | awk '$3 ~ /^ii/ { print $1 "\t" $2 }' | sort > /tmp/before.tsv
+          wc -l /tmp/before.tsv
+
+      - name: Install the offline deb (dpkg -i, as an offline user would)
+        run: |
+          dpkg -i debs/photocraft-*-kylin-amd64-offline.deb
+          dpkg -s photocraft | grep -q "^Status: install ok installed" || {
+            echo "photocraft is not installed cleanly" >&2; exit 1; }
+
+      - name: Run install-deps.sh (the missing-only installer) explicitly
+        # The postinst only schedules this when ldd reports gaps; running it here exercises
+        # the "install what is missing, never upgrade" path against this system's state.
+        run: /usr/share/photocraft/install-deps.sh
+
+      - name: Assert the zero-upgrade invariant
+        # The ldd gate cannot catch "the app runs but the system got damaged": any package
+        # present before the install whose version changed is a forbidden upgrade.
+        run: |
+          dpkg-query -W -f='${binary:Package}\t${Version}\t${db:Status-Abbrev}\n' 2>/dev/null \
+            | awk '$3 ~ /^ii/ { print $1 "\t" $2 }' | sort > /tmp/after.tsv
+          new="$(comm -13 /tmp/before.tsv /tmp/after.tsv | wc -l)"
+          echo "newly installed packages: $new"
+          comm -13 /tmp/before.tsv /tmp/after.tsv || true
+          # join prints only packages present in BOTH snapshots; any version difference
+          # between them is an upgrade of a system component, which is the red line.
+          if join -t "$(printf '\t')" -j 1 /tmp/before.tsv /tmp/after.tsv \
+            | awk -F'\t' '$2 != $3 { print "UPGRADED: " $1 " " $2 " -> " $3; bad = 1 } END { exit bad }'; then
+            echo "OK: no package was upgraded or replaced"
+          else
+            echo "FATAL: the offline install upgraded system components" >&2
+            exit 1
+          fi
+
+      - name: The binary must run with no missing libraries
+        run: |
+          ldd /usr/bin/photocraft | tee /tmp/ldd.txt
+          ! grep -q "not found" /tmp/ldd.txt
+          ldd /usr/bin/photocraft-cli | tee /tmp/ldd-cli.txt
+          ! grep -q "not found" /tmp/ldd-cli.txt
+          /usr/bin/photocraft-cli --version
+
+      - name: The activation command must answer on Kylin
+        # The startup gate needs a hardware identifier; the CLI's activation subcommand reads
+        # the same machine id. If it prints its four words, the gate will work there.
+        run: |
+          out="$(/usr/bin/photocraft-cli activation)"
+          echo "$out"
+          n="$(printf '%s' "$out" | tr -cd '-' | wc -c)"
+          n=$((n + 1))
+          [ "$n" -eq 4 ] || {
+            echo "activation printed $n words, expected 4" >&2; exit 1; }
+
+  publish-release:
+    name: Attach the packages to the tag's release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build-deb, verify-on-kylin]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+
+      - name: Create or update the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          set -e
+          cat > release_notes.md <<'EOF'
+          PhotoCraft for Kylin V10 SP1 (glibc 2.31 baseline), amd64 + aarch64.
+
+          - `photocraft-<version>-kylin-<arch>.deb` — regular package; a desktop system provides
+            the runtime libraries the app loads at run time (X11/Wayland, xkbcommon, Vulkan/GL).
+          - `photocraft-<version>-kylin-<arch>-offline.deb` — for minimal or offline machines:
+            bundles the runtime dependency closure. After `dpkg -i`, the installer runs
+            automatically when libraries are missing (10s delay, journalctl -u photocraft-deps),
+            or run `sudo /usr/share/photocraft/install-deps.sh` once.
+
+          Activation is a free local registration marker: the app asks once at startup
+          and stores the answer beside the installed files (`/usr/share/photocraft/.license.md`).
+
+          Requires glibc >= 2.31: Kylin V10 SP1 (Ubuntu 20.04 base), UOS/deepin desktops,
+          Debian 11+. Older systems are not supported — glibc cannot be bundled. The regular
+          distro packages (AppImage, deb, rpm) need a newer glibc and live in the main release.
+          EOF
+          if gh release view "$TAG_NAME" --repo "$REPO" >/dev/null 2>&1; then
+            gh release upload "$TAG_NAME" --repo "$REPO" --clobber assets/photocraft-*-kylin-*.deb
+          else
+            gh release create "$TAG_NAME" --repo "$REPO" \
+              --title "photocraft ${TAG_NAME#v} (Kylin V10 SP1)" \
+              --notes-file release_notes.md \
+              assets/photocraft-*-kylin-*.deb
+          fi
+          ls -lh assets/

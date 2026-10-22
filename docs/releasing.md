@@ -282,6 +282,18 @@ on PRs that touch `packaging/freebsd/`, `freebsd.yml` or `release.yml`), so the 
 isn't the first place it runs. Locally, on any OS, `packaging/freebsd/package.sh --dry-run` stages the tree from stub binaries
 and lists the tarball, which checks the layout without a FreeBSD machine.
 
+### Kylin V10 SP1
+
+`.github/workflows/kylin-v10-sp1-deb.yml` builds the glibc-2.31-baseline debs for Kylin V10
+SP1 (amd64 + aarch64) that the regular packages above cannot provide: native builds inside an
+Ubuntu 20.04 container, `packaging/linux/kylin/package.sh` writing
+`photocraft-<v>-kylin-<arch>.deb` and `-offline.deb` (bundled runtime dependency closure,
+missing-only installer, system-core blacklist). A verify job installs the offline deb into a
+real Kylin V10 SP1 base container and asserts the zero-upgrade invariant, an `ldd` gate and
+the activation command. Pushes to `main` build it; a `v*` tag attaches the debs to that tag's
+release. [`packaging/linux/kylin/README.md`](../packaging/linux/kylin/README.md) has the
+rationale and the local recipe. These builds enable `heif` and the `activation-gate`.
+
 ### Web
 
 `packaging/web/package.sh` runs `trunk build --release` for the app (`apps/photocraft-web`, into
