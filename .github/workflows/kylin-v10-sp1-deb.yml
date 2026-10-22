@@ -247,9 +247,13 @@ jobs:
       - name: The binary must run with no missing libraries
         run: |
           ldd /usr/bin/photocraft | tee /tmp/ldd.txt
-          ! grep -q "not found" /tmp/ldd.txt
+          if grep -q "not found" /tmp/ldd.txt; then
+            echo "::error::photocraft links libraries that are missing on Kylin"; exit 1
+          fi
           ldd /usr/bin/photocraft-cli | tee /tmp/ldd-cli.txt
-          ! grep -q "not found" /tmp/ldd-cli.txt
+          if grep -q "not found" /tmp/ldd-cli.txt; then
+            echo "::error::photocraft-cli links libraries that are missing on Kylin"; exit 1
+          fi
           /usr/bin/photocraft-cli --version
 
       - name: The activation command must answer on Kylin
