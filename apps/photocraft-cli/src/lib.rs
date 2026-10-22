@@ -42,6 +42,11 @@ USAGE:
       Run a droplet (File › Automate › Create Droplet) on images and folders.
   photocraft-cli commands [--json] [--filter <text>]
       List the engine command registry.
+  photocraft-cli activation
+      Print this machine's machine code (the words to send to the author).
+  photocraft-cli activation <machine-code words>
+      Print the activation code answering those words (the author's tool; e.g.
+      photocraft-cli activation 富强-立信-淳良-法治).
   photocraft-cli mcp [--bridge <127.0.0.1:port>] [--control-token <64-hex> | --control-token-file <path>]
       [--automation-read-root <dir>] [--automation-write-root <dir>]
       Run the MCP server on stdio (headless engine, or bridge to a running `photocraft --control <port>`).
@@ -92,6 +97,7 @@ const SUBCOMMANDS: &[Subcommand] = &[
     },
     Subcommand { name: "droplet", values: &["--out"], bare: &[], run: droplet },
     Subcommand { name: "commands", values: &["--filter"], bare: &["--json"], run: |a, out, _| commands(a, out) },
+    Subcommand { name: "activation", values: &[], bare: &[], run: activation },
     Subcommand {
         name: "mcp",
         values: &["--bridge", "--control-token", "--control-token-file", "--automation-read-root", "--automation-write-root"],
@@ -583,6 +589,24 @@ fn commands(a: &Args, out: &mut dyn Write) -> R {
         let menu = c["menu"].as_array().map(|m| m.iter().filter_map(Value::as_str).collect::<Vec<_>>().join(" > ")).unwrap_or_default();
         writeln!(out, "{:<44} {:<32} {}", c["id"].as_str().unwrap_or(""), c["label"].as_str().unwrap_or(""), menu).map_err(|e| e.to_string())?;
     }
+    Ok(())
+}
+
+/// The activation tool: with no arguments, print this machine's machine code (the words its
+/// user sends to the author); with machine-code words, print the activation code answering
+/// them (the author's side, see `photocraft-activation`).
+fn activation(a: &Args, out: &mut dyn Write, _err: &mut dyn Write) -> R {
+    if a.positional.is_empty() {
+        let id = photocraft_activation::machine_id().map_err(|e| e.to_string())?;
+        let code = photocraft_activation::machine_code(&id);
+        let _ = writeln!(out, "{}", code.render());
+        return Ok(());
+    }
+    // The words may arrive space-separated on a command line; rejoin with the separator
+    // before parsing (parse trims whitespace around each `-` token).
+    let machine = photocraft_activation::parse(&a.positional.join(&photocraft_activation::SEPARATOR.to_string())).map_err(|e| e.to_string())?;
+    let response = photocraft_activation::activation_response(&machine);
+    let _ = writeln!(out, "{}", response.render());
     Ok(())
 }
 

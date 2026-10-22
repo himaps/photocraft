@@ -3908,3 +3908,18 @@ curves	Smooth	Wygładź
 
 # Graphics Adapter preference (#1885)
 	GPU adapter	Karta GPU
+
+# Startup activation gate.
+	Activate PhotoCraft	Aktywuj PhotoCraft
+	Cannot read a hardware identifier on this machine; activation is not possible.	Nie można odczytać identyfikatora sprzętowego na tej maszynie; aktywacja nie jest możliwa.
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	Aktywacja jest bezpłatna: informuje autora jedynie, że ta instalacja istnieje. Kod pozostaje na tej maszynie, dopóki sam go nie wyślesz.
+	Your machine code — send it to the author:	Kod Twojej maszyny — wyślij go do autora:
+	Paste the activation code you received:	Wklej otrzymany kod aktywacji:
+	four words joined by -	cztery słowa połączone myślnikiem
+	Activate	Aktywuj
+	Activated. Thank you!	Aktywowano. Dziękujemy!
+	Couldn't write {path}: {error}	Nie można zapisać {path}: {error}
+	To store the activation, run this in a terminal and restart:	Aby zapisać aktywację, uruchom to w terminalu i uruchom ponownie:
+	That word is not in the table: {word}	Tego słowa nie ma w tabeli: {word}
+	A code has {expected} words, this one has {got}.	Kod ma {expected} słów, ten ma {got}.
+	The activation code does not match this machine.	Kod aktywacji nie pasuje do tej maszyny.

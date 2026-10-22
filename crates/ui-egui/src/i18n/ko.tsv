@@ -3498,3 +3498,18 @@ curves	Smooth	매끄럽게
 
 # Graphics Adapter preference (#1885)
 	GPU adapter	GPU 어댑터
+
+# Startup activation gate.
+	Activate PhotoCraft	PhotoCraft 활성화
+	Cannot read a hardware identifier on this machine; activation is not possible.	이 머신에서 하드웨어 식별자를 읽을 수 없어 활성화할 수 없습니다.
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	활성화는 무료입니다. 이 설치가 존재한다는 것을 개발자에게 알릴 뿐입니다. 코드는 직접 보내기 전까지는 이 머신에 머뭅니다.
+	Your machine code — send it to the author:	머신 코드 — 개발자에게 보내세요:
+	Paste the activation code you received:	받은 활성화 코드를 붙여넣으세요:
+	four words joined by -	하이픈(-)으로 연결된 4개의 단어
+	Activate	활성화
+	Activated. Thank you!	활성화되었습니다. 감사합니다!
+	Couldn't write {path}: {error}	{path}에 쓸 수 없습니다: {error}
+	To store the activation, run this in a terminal and restart:	활성화를 저장하려면 터미널에서 다음을 실행하고 재시작하세요:
+	That word is not in the table: {word}	그 단어는 단어표에 없습니다: {word}
+	A code has {expected} words, this one has {got}.	코드는 {expected}개의 단어이지만, 이것은 {got}개입니다.
+	The activation code does not match this machine.	활성화 코드가 이 머신과 일치하지 않습니다.

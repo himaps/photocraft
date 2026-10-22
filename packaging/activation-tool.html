@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PhotoCraft 注册工具</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --border: #d9dee5; --text: #1c2733;
+    --muted: #6b7785; --accent: #2f6fed; --accent-soft: #e8effd; --ok: #1d8a4b; --err: #c0392b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px; background: var(--bg); color: var(--text);
+    font: 14px/1.6 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  main { max-width: 860px; margin: 0 auto; display: grid; gap: 16px; }
+  h1 { font-size: 20px; margin: 0; }
+  h1 small { font-size: 12px; color: var(--muted); font-weight: normal; margin-left: 8px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .card h2 { font-size: 14px; margin: 0 0 8px; }
+  textarea {
+    width: 100%; min-height: 120px; resize: vertical; padding: 10px; border: 1px solid var(--border);
+    border-radius: 8px; font: 15px/1.8 "Microsoft YaHei", monospace; color: var(--text);
+  }
+  textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  .row { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+  button {
+    border: 1px solid var(--accent); background: var(--accent); color: #fff; border-radius: 8px;
+    padding: 7px 16px; font-size: 14px; cursor: pointer;
+  }
+  button.ghost { background: transparent; color: var(--accent); }
+  button:hover { filter: brightness(1.06); }
+  .hint { color: var(--muted); font-size: 12px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { border: 1px solid var(--border); padding: 4px 8px; text-align: left; }
+  th { background: var(--accent-soft); font-weight: 600; }
+  .out { font: 15px/1.9 "Microsoft YaHei", monospace; white-space: pre-wrap; word-break: break-all; }
+  .out .bad { color: var(--err); }
+  .out .good { color: var(--ok); }
+  .toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+    background: #222c38; color: #fff; padding: 8px 18px; border-radius: 999px; opacity: 0;
+    transition: opacity .2s; pointer-events: none;
+  }
+  .toast.show { opacity: .92; }
+</style>
+</head>
+<body>
+<main>
+  <h1>PhotoCraft 注册工具 <small>激活码由机器码推导，全程离线，不上传任何信息</small></h1>
+
+  <section class="card">
+    <h2>机器码 → 激活码</h2>
+    <textarea id="in" placeholder="每行一个机器码，例如：&#10;富强-立信-淳良-法治"></textarea>
+    <div class="row">
+      <button id="go">生成激活码</button>
+      <button id="copy" class="ghost">复制结果</button>
+      <button id="clear" class="ghost">清空</button>
+      <span class="hint">支持一次多行；词语之间的分隔符 - 和空格都可以。</span>
+    </div>
+    <div class="row"><div class="out" id="out" aria-live="polite"></div></div>
+  </section>
+
+  <section class="card">
+    <h2>激活词表（64 个，按序号）</h2>
+    <table id="words"></table>
+  </section>
+</main>
+<div class="toast" id="toast">已复制</div>
+
+<script>
+"use strict";
+// 与 crates/activation（photocraft-activation）保持一致的三张表。修改任何一项都会让
+// 已发出的激活码失效。
+const WORDS = ["富强","民主","文明","和谐","自由","平等","公正","法治","爱国","敬业","诚信","友善","昌隆","安泰","开化","盛平","兴邦","民本","崇文","和睦","自主","均平","公允","遵法","忠邦","恪职","立信","亲睦","弘道","笃行","崇信","尚和","守正","公义","平允","依规","严明","循法","明德","持公","普惠","安民","固本","维新","合众","宽和","明断","守矩","崇德","厚善","守诚","敬责","报国","敦睦","慎行","守信","向善","弘毅","克己","怀仁","崇礼","持节","谦恭","淳良"];
+const SEPARATOR = "-";
+// 响应密钥（与 Rust 端 KEY 相同的字符串，UTF-8 字节）。
+const KEY = "PhotoCraft Kylin activation ledger key 1 (a marker, not a secret)";
+const APP_ID = "photocraft";
+
+/**
+ * 把一行用户输入解析成机器码的序号序列。
+ * @param {string} line 一行机器码，词语之间用 - 或空白分隔
+ * @returns {{ok: true, indices: number[]} | {ok: false, error: string}}
+ */
+function parseLine(line) {
+  const words = line.trim().split(/[-\s]+/).filter((w) => w.length > 0);
+  if (words.length === 0) return { ok: false, error: "空行" };
+  const indices = [];
+  for (const w of words) {
+    const i = WORDS.indexOf(w);
+    if (i < 0) return { ok: false, error: "不在词表中的词：" + w };
+    indices.push(i);
+  }
+  if (indices.length !== 4) {
+    return { ok: false, error: "机器码应为 4 个词，这里有 " + indices.length + " 个" };
+  }
+  return { ok: true, indices };
+}
+
+/**
+ * 由机器码序号推导激活码序号：sha256(KEY 字节 ++ "photocraft" ++ 机器码序号)[i] & 63，
+ * 与 crates/activation/src/lib.rs 的 activation_response 完全一致。
+ * @param {number[]} indices 机器码的词序号（每个 0..63）
+ * @returns {Promise<number[]>} 激活码的词序号（与机器码等长）
+ */
+async function activationResponse(indices) {
+  const enc = new TextEncoder();
+  const key = enc.encode(KEY);
+  const app = enc.encode(APP_ID);
+  const data = new Uint8Array(key.length + app.length + indices.length);
+  data.set(key, 0);
+  data.set(app, key.length);
+  indices.forEach((v, i) => { data[key.length + app.length + i] = v; });
+  if (!crypto || !crypto.subtle) throw new Error("此页面需要浏览器的 Web Crypto（请用 Edge/Chrome/Firefox 直接打开本文件）");
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", data));
+  return Array.from(indices, (_, i) => digest[i] & 63);
+}
+
+/**
+ * 渲染一批机器码的激活码，一行输入对应一行输出。
+ * @param {string} text 输入区文本（可多行）
+ */
+async function convert(text) {
+  const out = document.getElementById("out");
+  const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+  if (lines.length === 0) { out.textContent = ""; return; }
+  const parts = [];
+  for (const line of lines) {
+    const parsed = parseLine(line);
+    if (!parsed.ok) {
+      parts.push('<span class="bad">✗ ' + escapeHtml(line.trim()) + " — " + escapeHtml(parsed.error) + "</span>");
+      continue;
+    }
+    try {
+      const response = await activationResponse(parsed.indices);
+      const code = response.map((i) => WORDS[i]).join(SEPARATOR);
+      parts.push('<span class="good">✓ ' + escapeHtml(line.trim()) + " → " + escapeHtml(code) + "</span>");
+    } catch (e) {
+      parts.push('<span class="bad">✗ ' + escapeHtml(String(e && e.message || e)) + "</span>");
+    }
+  }
+  out.innerHTML = parts.join("\n");
+}
+
+/**
+ * HTML 转义，防止机器码中的字符被当作标签。
+ * @param {string} s 原始文本
+ * @returns {string} 转义后的文本
+ */
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+/** 生成激活词表的 8×8 参考表格。 */
+function wordTable() {
+  const table = document.getElementById("words");
+  let html = "";
+  for (let r = 0; r < 8; r++) {
+    html += "<tr>";
+    for (let c = 0; c < 8; c++) {
+      const i = r * 8 + c;
+      html += "<td>" + i + "&nbsp;<b>" + WORDS[i] + "</b></td>";
+    }
+    html += "</tr>";
+  }
+  table.innerHTML = html;
+}
+
+/** 短暂显示右下角提示。 */
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1400);
+}
+
+document.getElementById("go").addEventListener("click", () => convert(document.getElementById("in").value));
+document.getElementById("in").addEventListener("input", (e) => convert(e.target.value));
+document.getElementById("clear").addEventListener("click", () => {
+  document.getElementById("in").value = "";
+  document.getElementById("out").textContent = "";
+});
+document.getElementById("copy").addEventListener("click", () => {
+  const text = [...document.querySelectorAll("#out .good")].map((n) => n.textContent.split(" → ")[1]).join("\n");
+  if (!text) { toast("没有可复制的结果"); return; }
+  navigator.clipboard.writeText(text).then(() => toast("已复制"), () => toast("复制失败"));
+});
+wordTable();
+</script>
+</body>
+</html>

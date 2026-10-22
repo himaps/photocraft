@@ -3986,3 +3986,18 @@ curves	Smooth	スムーズ
 
 # Graphics Adapter preference (#1885)
 	GPU adapter	GPU アダプター
+
+# Startup activation gate.
+	Activate PhotoCraft	PhotoCraft をアクティベート
+	Cannot read a hardware identifier on this machine; activation is not possible.	このマシンでハードウェア識別子を読み取れないため、アクティベートできません。
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	アクティベーションは無料です。このインストールが存在することを作者に伝えるだけです。コードは、あなたが自分で送信しない限り、このマシンから出ません。
+	Your machine code — send it to the author:	あなたのマシンコード — 作者に送信してください:
+	Paste the activation code you received:	受け取ったアクティベーションコードを貼り付けてください:
+	four words joined by -	- でつないだ 4 個の単語
+	Activate	アクティベート
+	Activated. Thank you!	アクティベートされました。ありがとうございます！
+	Couldn't write {path}: {error}	{path} に書き込めませんでした: {error}
+	To store the activation, run this in a terminal and restart:	アクティベーションを保存するには、ターミナルでこれを実行して再起動してください:
+	That word is not in the table: {word}	その単語は語表にありません: {word}
+	A code has {expected} words, this one has {got}.	コードは {expected} 語ですが、これには {got} 語あります。
+	The activation code does not match this machine.	アクティベーションコードがこのマシンと一致しません。

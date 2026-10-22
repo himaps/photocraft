@@ -4270,3 +4270,18 @@ navigator	Zoom	Zoom
 
 # Graphics Adapter preference (#1885)
 	GPU adapter	Adaptador de GPU
+
+# Startup activation gate.
+	Activate PhotoCraft	Activar PhotoCraft
+	Cannot read a hardware identifier on this machine; activation is not possible.	No se pudo leer un identificador de hardware en esta máquina; no es posible la activación.
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	La activación es gratuita: solo informa al autor de que esta instalación existe. El código se queda en esta máquina hasta que usted mismo lo envíe.
+	Your machine code — send it to the author:	Su código de máquina — envíelo al autor:
+	Paste the activation code you received:	Pegue el código de activación que recibió:
+	four words joined by -	cuatro palabras unidas por -
+	Activate	Activar
+	Activated. Thank you!	Activado. ¡Gracias!
+	Couldn't write {path}: {error}	No se pudo escribir {path}: {error}
+	To store the activation, run this in a terminal and restart:	Para guardar la activación, ejecute esto en una terminal y reinicie:
+	That word is not in the table: {word}	Esa palabra no está en la tabla: {word}
+	A code has {expected} words, this one has {got}.	Un código tiene {expected} palabras; este tiene {got}.
+	The activation code does not match this machine.	El código de activación no coincide con esta máquina.

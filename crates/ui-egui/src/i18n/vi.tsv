@@ -3798,3 +3798,18 @@ curves	Smooth	Làm mượt
 
 # Graphics Adapter preference (#1885)
 	GPU adapter	Bộ điều hợp GPU
+
+# Startup activation gate.
+	Activate PhotoCraft	Kích hoạt PhotoCraft
+	Cannot read a hardware identifier on this machine; activation is not possible.	Không thể đọc mã nhận dạng phần cứng trên máy này; không thể kích hoạt.
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	Kích hoạt là miễn phí: nó chỉ cho tác giả biết rằng bản cài đặt này tồn tại. Mã sẽ ở lại máy này cho đến khi bạn tự gửi đi.
+	Your machine code — send it to the author:	Mã máy của bạn — hãy gửi cho tác giả:
+	Paste the activation code you received:	Dán mã kích hoạt bạn đã nhận:
+	four words joined by -	bốn từ nối bằng dấu -
+	Activate	Kích hoạt
+	Activated. Thank you!	Đã kích hoạt. Cảm ơn bạn!
+	Couldn't write {path}: {error}	Không thể ghi {path}: {error}
+	To store the activation, run this in a terminal and restart:	Để lưu kích hoạt, hãy chạy lệnh này trong terminal và khởi động lại:
+	That word is not in the table: {word}	Từ này không có trong bảng: {word}
+	A code has {expected} words, this one has {got}.	Mã có {expected} từ, mã này có {got}.
+	The activation code does not match this machine.	Mã kích hoạt không khớp với máy này.

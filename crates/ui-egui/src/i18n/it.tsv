@@ -4425,3 +4425,18 @@ shape	Appearance	Aspetto
 
 # Graphics Adapter preference (#1885)
 	GPU adapter	Adattatore GPU
+
+# Startup activation gate.
+	Activate PhotoCraft	Attiva PhotoCraft
+	Cannot read a hardware identifier on this machine; activation is not possible.	Impossibile leggere un identificatore hardware su questa macchina; l'attivazione non è possibile.
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	L'attivazione è gratuita: informa solo l'autore che questa installazione esiste. Il codice resta su questa macchina finché non lo invii tu stesso.
+	Your machine code — send it to the author:	Il codice della tua macchina — invialo all'autore:
+	Paste the activation code you received:	Incolla il codice di attivazione ricevuto:
+	four words joined by -	quattro parole unite da -
+	Activate	Attiva
+	Activated. Thank you!	Attivato. Grazie!
+	Couldn't write {path}: {error}	Impossibile scrivere {path}: {error}
+	To store the activation, run this in a terminal and restart:	Per salvare l'attivazione, esegui questo in un terminale e riavvia:
+	That word is not in the table: {word}	Questa parola non è nella tabella: {word}
+	A code has {expected} words, this one has {got}.	Un codice ha {expected} parole, questo ne ha {got}.
+	The activation code does not match this machine.	Il codice di attivazione non corrisponde a questa macchina.

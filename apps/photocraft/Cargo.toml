@@ -11,6 +11,9 @@ build = "build.rs"
 # Open HEIC/HEIF photos (the optional photocraft-heif crate). Not default so distributors choose
 # it; official builds (CI, packaging/, release) build with `--features heif`.
 heif = ["photocraft-codecs/heif"]
+# The startup activation gate: development builds and tests run without it; packaging and the
+# release workflow build with `--features activation-gate` (plus `heif`).
+activation-gate = ["photocraft-ui-egui/activation-gate"]
 
 [lints]
 workspace = true

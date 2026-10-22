@@ -35,6 +35,7 @@ pub(crate) mod brush_cursor;
 pub mod brush_panel;
 pub mod brush_picker;
 pub mod brush_preset_dialog;
+pub mod activation_ui;
 pub mod brush_preview;
 pub mod brush_resize;
 pub mod brush_sections;
@@ -744,6 +745,8 @@ pub struct PhotocraftApp {
     /// sent again only when it changes, so idle frames don't spam the backend.
     last_window_title: String,
     fonts_ready: bool,
+    /// The startup activation dialog: shown while this installation is not activated.
+    pub activation: activation_ui::Dialog,
     /// Screen rect of the main canvas last frame (for overlays and the navigator).
     pub last_canvas_rect: egui::Rect,
     /// Window › Arrange: the first document of the shown run of tiles, when there are more
@@ -998,6 +1001,7 @@ impl PhotocraftApp {
             custom_titlebar: false,
             last_window_title: String::new(),
             fonts_ready: false,
+            activation: activation_ui::Dialog::new(),
             last_canvas_rect: egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(800.0, 600.0)),
             arrange_start: 0,
             ppp: 1.0,
@@ -2195,6 +2199,12 @@ impl eframe::App for PhotocraftApp {
         if !self.fonts_ready {
             ctx.request_repaint();
             self.automation_input = false;
+            return;
+        }
+        // Activation gate: the app does not run until a valid code is entered.
+        if !activation_ui::gate(self, ui) {
+            self.automation_input = false;
+            gpu_status::check_window(self, &ctx);
             return;
         }
         let t0 = gpu_canvas::now_ms();

@@ -1,0 +1,16 @@
+[package]
+name = "photocraft-activation"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "The local activation marker: machine code and activation code as words, stored beside the installed files"
+
+[lints]
+workspace = true
+
+[dependencies]
+sha2 = "0.11"
+thiserror.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+winsafe = { version = "0.0.29", default-features = false, features = ["advapi"] }

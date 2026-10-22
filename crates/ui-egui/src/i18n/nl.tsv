@@ -4068,3 +4068,18 @@ curves	Smooth	Vloeiend maken
 
 # Graphics Adapter preference (#1885)
 	GPU adapter	GPU-adapter
+
+# Startup activation gate.
+	Activate PhotoCraft	PhotoCraft activeren
+	Cannot read a hardware identifier on this machine; activation is not possible.	Kan geen hardware-identificatie op deze machine lezen; activeren is niet mogelijk.
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	Activeren is gratis: het vertelt de maker alleen dat deze installatie bestaat. De code blijft op deze machine totdat u hem zelf verzendt.
+	Your machine code — send it to the author:	Uw machinecode — stuur deze naar de maker:
+	Paste the activation code you received:	Plak de activeringscode die u heeft ontvangen:
+	four words joined by -	vier woorden verbonden door -
+	Activate	Activeren
+	Activated. Thank you!	Geactiveerd. Bedankt!
+	Couldn't write {path}: {error}	Kan {path} niet schrijven: {error}
+	To store the activation, run this in a terminal and restart:	Om de activering op te slaan, voert u dit uit in een terminal en start u opnieuw:
+	That word is not in the table: {word}	Dat woord staat niet in de tabel: {word}
+	A code has {expected} words, this one has {got}.	Een code heeft {expected} woorden, deze heeft {got}.
+	The activation code does not match this machine.	De activeringscode hoort niet bij deze machine.

@@ -4224,3 +4224,18 @@ cameraRaw	Yellow	Sárga
 
 # Graphics Adapter preference (#1885)
 	GPU adapter	GPU-adapter
+
+# Startup activation gate.
+	Activate PhotoCraft	PhotoCraft aktiválása
+	Cannot read a hardware identifier on this machine; activation is not possible.	Ezen a gépen nem olvasható hardverazonosító; az aktiválás nem lehetséges.
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	Az aktiválás ingyenes: csak arról tájékoztatja a szerzőt, hogy ez a telepítés létezik. A kód ezen a gépen marad, amíg Ön el nem küldi.
+	Your machine code — send it to the author:	Gépkódja — küldje el a szerzőnek:
+	Paste the activation code you received:	Illessze be a kapott aktiválási kódot:
+	four words joined by -	kötőjellel kapcsolt négy szó
+	Activate	Aktiválás
+	Activated. Thank you!	Aktiválva. Köszönjük!
+	Couldn't write {path}: {error}	A(z) {path} nem írható: {error}
+	To store the activation, run this in a terminal and restart:	Az aktiválás mentéséhez futtassa ezt egy terminálban, majd indítsa újra:
+	That word is not in the table: {word}	Ez a szó nincs a táblázatban: {word}
+	A code has {expected} words, this one has {got}.	Egy kód {expected} szóból áll, ez {got} szóból.
+	The activation code does not match this machine.	Az aktiválási kód nem ehhez a géphez tartozik.

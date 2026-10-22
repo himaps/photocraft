@@ -4379,3 +4379,18 @@ shape	Appearance	Izgled
 
 # Graphics Adapter preference (#1885)
 	GPU adapter	GPU adapter
+
+# Startup activation gate.
+	Activate PhotoCraft	Aktiviraj PhotoCraft
+	Cannot read a hardware identifier on this machine; activation is not possible.	Na ovom računaru nije moguće pročitati hardverski identifikator; aktiviranje nije moguće.
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	Aktiviranje je besplatno: samo obaveštava autora da ova instalacija postoji. Kod ostaje na ovom računaru dok ga sami ne pošaljete.
+	Your machine code — send it to the author:	Kod vašeg računara — pošaljite ga autoru:
+	Paste the activation code you received:	Nalepite aktivacioni kod koji ste primili:
+	four words joined by -	četiri reči spojene crticom
+	Activate	Aktiviraj
+	Activated. Thank you!	Aktivirano. Hvala!
+	Couldn't write {path}: {error}	Nije moguće pisati {path}: {error}
+	To store the activation, run this in a terminal and restart:	Da biste sačuvali aktiviranje, pokrenite ovo u terminalu i ponovo pokrenite program:
+	That word is not in the table: {word}	Ta reč nije u tabeli: {word}
+	A code has {expected} words, this one has {got}.	Kod ima {expected} reči, ovaj ima {got}.
+	The activation code does not match this machine.	Aktivacioni kod ne odgovara ovom računaru.

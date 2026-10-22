@@ -2943,3 +2943,18 @@ curves	Smooth	平滑
 
 # Graphics Adapter preference (#1885)
 	GPU adapter	GPU 适配器
+
+# Startup activation gate.
+	Activate PhotoCraft	激活 PhotoCraft
+	Cannot read a hardware identifier on this machine; activation is not possible.	无法读取本机的硬件标识，无法激活。
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	激活是免费的：它只是告知作者这份安装的存在。代码会留在这台机器上，除非您亲自发送。
+	Your machine code — send it to the author:	您的机器码 — 请发送给作者：
+	Paste the activation code you received:	粘贴您收到的激活码：
+	four words joined by -	4 个词，用 - 连接
+	Activate	激活
+	Activated. Thank you!	已激活。感谢！
+	Couldn't write {path}: {error}	无法写入 {path}：{error}
+	To store the activation, run this in a terminal and restart:	要保存激活，请在终端中运行以下命令并重启：
+	That word is not in the table: {word}	该词不在词表中：{word}
+	A code has {expected} words, this one has {got}.	激活码应为 {expected} 个词，此处为 {got} 个。
+	The activation code does not match this machine.	激活码与本机不匹配。

@@ -4035,3 +4035,18 @@ cameraData	Lens	Lens
 
 # Graphics Adapter preference (#1885)
 	GPU adapter	GPU bağdaştırıcısı
+
+# Startup activation gate.
+	Activate PhotoCraft	PhotoCraft'ı etkinleştir
+	Cannot read a hardware identifier on this machine; activation is not possible.	Bu makinede bir donanım tanımlayıcısı okunamadı; etkinleştirme mümkün değil.
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	Etkinleştirme ücretsizdir: yalnızca bu kurulumun var olduğunu yazarına bildirir. Kod, siz kendiniz gönderene kadar bu makinede kalır.
+	Your machine code — send it to the author:	Makine kodunuz — yazara gönderin:
+	Paste the activation code you received:	Aldığınız etkinleştirme kodunu yapıştırın:
+	four words joined by -	tire ile birleştirilmiş dört kelime
+	Activate	Etkinleştir
+	Activated. Thank you!	Etkinleştirildi. Teşekkürler!
+	Couldn't write {path}: {error}	{path} yazılamadı: {error}
+	To store the activation, run this in a terminal and restart:	Etkinleştirmeyi kaydetmek için bunu bir terminalde çalıştırın ve yeniden başlatın:
+	That word is not in the table: {word}	Bu kelime tabloda yok: {word}
+	A code has {expected} words, this one has {got}.	Bir kod {expected} kelimeden oluşur, bu {got} kelime.
+	The activation code does not match this machine.	Etkinleştirme kodu bu makineyle eşleşmiyor.

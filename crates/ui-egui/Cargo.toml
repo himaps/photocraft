@@ -7,6 +7,11 @@ license.workspace = true
 [lints]
 workspace = true
 
+[features]
+# The startup activation gate (`activation_ui`): compiled out of development builds, tests and
+# the web build; packaging turns it on (`--features photocraft/activation-gate` on the app).
+activation-gate = []
+
 [dependencies]
 craft-print = { workspace = true }
 craft-ui = { workspace = true }
@@ -18,6 +23,7 @@ photocraft-doc = { workspace = true }
 photocraft-compose = { workspace = true }
 photocraft-gpu = { workspace = true }
 photocraft-engine = { workspace = true }
+photocraft-activation = { workspace = true }
 photocraft-io = { workspace = true }
 photocraft-plugins = { workspace = true }
 photocraft-algo = { workspace = true }

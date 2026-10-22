@@ -632,6 +632,29 @@ fn in_process_run_matches_binary() {
     assert!(String::from_utf8(out).unwrap().contains("file.new"));
 }
 
+/// The author's activation tool round-trips: the code printed for a machine code verifies
+/// against it in the activation crate, and a bad word is an error, not a panic (rule 9).
+#[test]
+fn activation_answers_the_machine_code_words() {
+    let machine = photocraft_activation::machine_code("cli-test-machine");
+    let mut out = Vec::new();
+    let mut err = Vec::new();
+    let args = vec!["activation".to_owned(), machine.render()];
+    let code = photocraft_cli::run(&args, &mut out, &mut err);
+    assert_eq!(code, 0);
+    let answer = String::from_utf8(out).unwrap().trim().to_owned();
+    assert_eq!(photocraft_activation::parse(&answer).unwrap(), photocraft_activation::activation_response(&machine));
+    // Space-separated words are accepted too (how a command line would pass them).
+    let mut out = Vec::new();
+    let words = machine.render().split(photocraft_activation::SEPARATOR).map(str::to_owned).collect::<Vec<_>>();
+    let args = std::iter::once("activation".to_owned()).chain(words).collect::<Vec<String>>();
+    assert_eq!(photocraft_cli::run(&args, &mut out, &mut err), 0);
+    assert_eq!(String::from_utf8(out).unwrap().trim(), answer);
+    // A word outside the table is a usage error.
+    let mut err = Vec::new();
+    assert_ne!(photocraft_cli::run(&["activation".into(), "hello".into()], &mut Vec::new(), &mut err), 0);
+}
+
 #[test]
 fn mcp_stdio_handshake_and_tool_call() {
     let mut child = bin().arg("mcp").stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::null()).spawn().unwrap();

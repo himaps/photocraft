@@ -3306,3 +3306,18 @@ curves	Smooth	Haluskan
 
 # Graphics Adapter preference (#1885)
 	GPU adapter	Adaptor GPU
+
+# Startup activation gate.
+	Activate PhotoCraft	Aktifkan PhotoCraft
+	Cannot read a hardware identifier on this machine; activation is not possible.	Tidak dapat membaca pengenal perangkat keras pada mesin ini; aktivasi tidak dimungkinkan.
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	Aktivasi gratis: itu hanya memberi tahu penulis bahwa instalasi ini ada. Kode tetap di mesin ini sampai Anda mengirimnya sendiri.
+	Your machine code — send it to the author:	Kode mesin Anda — kirimkan ke penulis:
+	Paste the activation code you received:	Tempel kode aktivasi yang Anda terima:
+	four words joined by -	empat kata yang dihubungkan dengan -
+	Activate	Aktifkan
+	Activated. Thank you!	Diaktifkan. Terima kasih!
+	Couldn't write {path}: {error}	Tidak dapat menulis {path}: {error}
+	To store the activation, run this in a terminal and restart:	Untuk menyimpan aktivasi, jalankan ini di terminal lalu mulai ulang:
+	That word is not in the table: {word}	Kata itu tidak ada dalam tabel: {word}
+	A code has {expected} words, this one has {got}.	Kode memiliki {expected} kata, yang ini memiliki {got}.
+	The activation code does not match this machine.	Kode aktivasi tidak cocok dengan mesin ini.

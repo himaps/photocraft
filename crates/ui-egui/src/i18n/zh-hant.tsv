@@ -2928,3 +2928,18 @@ curves	Smooth	平滑
 
 # Graphics Adapter preference (#1885)
 	GPU adapter	GPU 介面卡
+
+# Startup activation gate.
+	Activate PhotoCraft	啟用 PhotoCraft
+	Cannot read a hardware identifier on this machine; activation is not possible.	無法讀取本機的硬體識別碼，無法啟用。
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	啟用是免費的：它只是告知作者這份安裝的存在。程式碼會留在這台機器上，除非您親自傳送。
+	Your machine code — send it to the author:	您的機器碼 — 請傳送給作者：
+	Paste the activation code you received:	貼上您收到的啟用碼：
+	four words joined by -	4 個詞，以 - 連接
+	Activate	啟用
+	Activated. Thank you!	已啟用。感謝！
+	Couldn't write {path}: {error}	無法寫入 {path}：{error}
+	To store the activation, run this in a terminal and restart:	要儲存啟用，請在終端機中執行以下命令並重新啟動：
+	That word is not in the table: {word}	該詞不在詞表中：{word}
+	A code has {expected} words, this one has {got}.	啟用碼應為 {expected} 個詞，此處為 {got} 個。
+	The activation code does not match this machine.	啟用碼與本機不符。
