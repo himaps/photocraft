@@ -66,7 +66,7 @@ the app shows a one-time registration page (machine code + activation code) and 
 answer beside the installed files — for the deb layout, `/usr/share/photocraft/.license.md`
 (root-owned, hence the sudo hint the UI shows when it can't write there). It is a free local
 marker, not a licence server. `photocraft-cli activation` answers the machine code words, and
-`packaging/activation-tool.html` converts machine codes to activation codes offline.
+`packaging/photocraft-activation-tool.html` converts machine codes to activation codes offline.
 
 ## Checks before shipping
 

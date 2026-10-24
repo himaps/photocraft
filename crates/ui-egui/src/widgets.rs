@@ -1227,6 +1227,35 @@ pub fn secondary_button(ui: &mut Ui, label: &str, min_width: f32) -> Response {
     button_impl(ui, label, min_width, t.field, t.text, false)
 }
 
+/// Rounded pill button; `primary` fills with the accent.
+///
+/// Compact (height 28 px, width = label + 26 px) with fully rounded corners, matching the
+/// activation screens of the other craft apps so the gate looks identical across products.
+pub fn pill_button(ui: &mut Ui, label: &str, primary: bool) -> Response {
+    let t = Tokens::get(ui.ctx());
+    let font = theme::medium(12.5);
+    let galley = ui.painter().layout_no_wrap(tl!(label).to_owned(), font.clone(), t.text);
+    let (rect, resp) = ui.allocate_exact_size(vec2(galley.size().x + 26.0, 28.0), Sense::click());
+    resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), label));
+    let down = resp.is_pointer_button_down_on();
+    let (fill, stroke, text) = if primary {
+        let fill = if down {
+            t.accent.gamma_multiply(0.8)
+        } else if resp.hovered() {
+            t.accent.gamma_multiply(0.9)
+        } else {
+            t.accent
+        };
+        (fill, Stroke::NONE, t.accent_text)
+    } else {
+        let fill = if down { t.pressed } else if resp.hovered() { t.hover } else { t.card };
+        (fill, Stroke::new(1.0, t.card_border), t.text)
+    };
+    ui.painter().rect(rect, CornerRadius::same(14), fill, stroke, StrokeKind::Inside);
+    ui.painter().galley(rect.center() - galley.size() / 2.0, galley, text);
+    resp
+}
+
 /// A [`secondary_button`] `height` points tall, for slim bars such as the status bar (#2823).
 pub fn compact_button(ui: &mut Ui, label: &str, height: f32) -> Response {
     let t = Tokens::get(ui.ctx());

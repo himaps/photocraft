@@ -70,7 +70,7 @@ fn gate_native(app: &mut PhotocraftApp, ui: &mut egui::Ui) -> bool {
         // No hardware identifier: show an error but keep the gate shut — we cannot derive
         // a machine code, so there is nothing the user could send to the author.
         let t = theme::Tokens::get(ui.ctx());
-        egui::CentralPanel::default().frame(egui::Frame::NONE.fill(t.dock)).show(ui, |ui| {
+        egui::CentralPanel::default().frame(egui::Frame::NONE.fill(t.canvas)).show(ui, |ui| {
             ui.with_layout(egui::Layout::top_down_justified(egui::Align::Center), |ui| {
                 ui.add_space(120.0);
                 ui.label(egui::RichText::new(tl!("Activate PhotoCraft")).font(theme::semibold(20.0)));
@@ -98,7 +98,7 @@ fn gate_native(app: &mut PhotocraftApp, ui: &mut egui::Ui) -> bool {
     let t = theme::Tokens::get(ui.ctx());
     let mut activate = false;
 
-    egui::CentralPanel::default().frame(egui::Frame::NONE.fill(t.dock)).show(ui, |ui| {
+    egui::CentralPanel::default().frame(egui::Frame::NONE.fill(t.canvas)).show(ui, |ui| {
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::Center), |ui| {
             ui.add_space(80.0);
             ui.add(crate::icons::image("badge-check", 36.0, t.accent));
@@ -124,7 +124,7 @@ fn gate_native(app: &mut PhotocraftApp, ui: &mut egui::Ui) -> bool {
                     ui.add_space(4.0);
                     ui.horizontal(|ui| {
                         ui.label(egui::RichText::new(&machine_text).font(theme::semibold(16.0)).color(t.accent_text));
-                        if widgets::secondary_button(ui, tl!("Copy"), 84.0).clicked() {
+                        if widgets::pill_button(ui, tl!("Copy"), false).clicked() {
                             ui.ctx().copy_text(machine_text.clone());
                         }
                     });
@@ -154,7 +154,7 @@ fn gate_native(app: &mut PhotocraftApp, ui: &mut egui::Ui) -> bool {
                 ui.add_space(6.0);
             }
             ui.add_space(4.0);
-            if widgets::primary_button(ui, tl!("Activate"), 160.0).clicked() {
+            if widgets::pill_button(ui, tl!("Activate"), true).clicked() {
                 activate = true;
             }
         });
