@@ -4,15 +4,15 @@
 # out for now: PdfCraft saw an intermittent access violation in egui UI tests there.)
 name: Windows ARM64
 
-# Nightly on main (dependency and runner-image drift shows up within a day), and on PRs that
-# change the Windows packaging itself.
+# On demand, and on PRs that change the Windows packaging itself. The upstream nightly schedule
+# is dropped on this fork: GitHub disables Actions on forks that keep inheriting upstream
+# schedules, and the nightly ARM64 smoke run is not needed when release builds are triggered by
+# hand.
 on:
   pull_request:
     paths:
       - .github/workflows/windows-arm64.yml
       - packaging/windows/**
-  schedule:
-    - cron: "41 4 * * *"
   workflow_dispatch:
 
 concurrency:

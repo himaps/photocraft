@@ -1,7 +1,9 @@
 name: Perf (nightly)
 
 # The performance scorecard (#221): `cargo xtask perf` on a fixed macOS runner (Apple silicon,
-# Metal), every night and on demand. It never runs on pull requests, so it can't block one.
+# Metal), on demand. It never runs on pull requests, so it can't block one. The upstream nightly
+# schedule is dropped on this fork (see AGENTS.md-style fork policy: inherited schedules are what
+# gets Actions disabled on forks), so run it by hand when a change touches a hot path.
 # It fails when an enforced budget in perf/budgets.toml breaks or a scenario's p50 regresses
 # more than 15 % against perf/baseline.json from the same machine class (other classes are
 # never compared). The table goes to the job summary; results.json is uploaded as an artifact.
@@ -10,8 +12,6 @@ name: Perf (nightly)
 # the `perf-baseline` artifact and commit it as perf/baseline.json in a PR.
 
 on:
-  schedule:
-    - cron: "23 3 * * *"
   workflow_dispatch:
     inputs:
       quick:
