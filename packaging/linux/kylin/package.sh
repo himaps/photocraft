@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# Build the Kylin V10 SP1-targeted .deb packages for Linux. <osarch> is amd64 or aarch64:
+# Build the Kylin V10 SP1-targeted .deb packages for Linux.
 #
-#   $DIST/photocraft-<version>-kylin-<osarch>.deb          regular package
-#   $DIST/photocraft-<version>-kylin-<osarch>-offline.deb  + bundled runtime dependency closure
+#   $DIST/photocraft-<version>-kylin-v10-sp1-<arch>.deb          regular package
+#   $DIST/photocraft-<version>-kylin-v10-sp1-<arch>-offline.deb  + bundled runtime dependency closure
+# <arch> is x64 or aarch64, matching the naming of the other release assets; the deb's own
+# Architecture field stays dpkg's amd64/arm64.
 #
 # Run inside an Ubuntu 20.04 (focal) container, or on a host with glibc 2.31 — the same
 # baseline as Kylin V10 SP1 (glibc 2.31-0kylin, Ubuntu 20.04 blood). Focal is preferred over
@@ -47,8 +49,8 @@ done
 
 ARCH="$(uname -m)"
 case "$ARCH" in
-  x86_64) OSARCH=amd64; DEB_ARCH=amd64 ;;
-  aarch64 | arm64) OSARCH=aarch64; DEB_ARCH=arm64 ;;
+  x86_64) OSARCH=amd64; DEB_ARCH=amd64; FILE_ARCH=x64 ;;
+  aarch64 | arm64) OSARCH=aarch64; DEB_ARCH=arm64; FILE_ARCH=aarch64 ;;
   *) echo "unsupported architecture $ARCH (this path targets the amd64/aarch64 Kylin V10 SP1 images)" >&2; exit 2 ;;
 esac
 # A distinct label, so `--version` ("0.1.0 (kylin)") and the file names can't be mistaken for
@@ -56,7 +58,7 @@ esac
 export PHOTOCRAFT_BUILD_LABEL="${PHOTOCRAFT_BUILD_LABEL:-kylin}"
 export PHOTOCRAFT_MAINTAINER="${PHOTOCRAFT_MAINTAINER:-PhotoCraft maintainers <photocraft@storyteller.ai>}"
 DEB_VERSION="${VERSION}+kylin"
-BASENAME="photocraft-$VERSION-kylin-$OSARCH"
+BASENAME="photocraft-$VERSION-kylin-v10-sp1-$FILE_ARCH"
 
 if [ -z "${CRAFT_FONTS_DIR:-}" ]; then
   warn "CRAFT_FONTS_DIR is not set: the build embeds no fonts (CJK interface text then falls back to a system font at run time, as on every build without it)"

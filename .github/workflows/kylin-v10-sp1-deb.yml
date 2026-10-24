@@ -216,7 +216,7 @@ jobs:
 
       - name: Install the offline deb (dpkg -i, as an offline user would)
         run: |
-          dpkg -i debs/photocraft-*-kylin-amd64-offline.deb
+          dpkg -i debs/photocraft-*-kylin-v10-sp1-x64-offline.deb
           dpkg -s photocraft | grep -q "^Status: install ok installed" || {
             echo "photocraft is not installed cleanly" >&2; exit 1; }
 
@@ -289,9 +289,9 @@ jobs:
           cat > release_notes.md <<'EOF'
           PhotoCraft for Kylin V10 SP1 (glibc 2.31 baseline), amd64 + aarch64.
 
-          - `photocraft-<version>-kylin-<arch>.deb` — regular package; a desktop system provides
+          - `photocraft-<version>-kylin-v10-sp1-<arch>.deb` — regular package; a desktop system provides
             the runtime libraries the app loads at run time (X11/Wayland, xkbcommon, Vulkan/GL).
-          - `photocraft-<version>-kylin-<arch>-offline.deb` — for minimal or offline machines:
+          - `photocraft-<version>-kylin-v10-sp1-<arch>-offline.deb` — for minimal or offline machines:
             bundles the runtime dependency closure. After `dpkg -i`, the installer runs
             automatically when libraries are missing (10s delay, journalctl -u photocraft-deps),
             or run `sudo /usr/share/photocraft/install-deps.sh` once.

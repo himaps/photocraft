@@ -29,10 +29,11 @@ landed); a fresh checkout always matches.
 
 | File | What it is |
 |---|---|
-| `photocraft-<version>-kylin-<osarch>.deb` | regular package; a desktop system provides the runtime libraries the app loads at run time (X11/Wayland, xkbcommon, Vulkan/GL, fontconfig) |
-| `photocraft-<version>-kylin-<osarch>-offline.deb` | for minimal or offline machines: bundles the runtime dependency closure under `/usr/share/photocraft/deps` |
+| `photocraft-<version>-kylin-v10-sp1-<arch>.deb` | regular package; a desktop system provides the runtime libraries the app loads at run time (X11/Wayland, xkbcommon, Vulkan/GL, fontconfig) |
+| `photocraft-<version>-kylin-v10-sp1-<arch>-offline.deb` | for minimal or offline machines: bundles the runtime dependency closure under `/usr/share/photocraft/deps` |
 
-`<osarch>` is `amd64` or `aarch64`. Both build natively (no cross compilation) inside a
+`<arch>` is `x64` or `aarch64` in the file names (matching the other release assets); the deb's
+own `Architecture` field stays `amd64` or `arm64`. Both build natively (no cross compilation) inside a
 focal container. The version carries a `+kylin` Debian revision and the binaries report
 `photocraft <version> (kylin; …)` via `PHOTOCRAFT_BUILD_LABEL` (see
 `crates/engine/src/build_info.rs`), so they can't be mistaken for the regular distro build.

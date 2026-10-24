@@ -27,7 +27,6 @@ jobs:
       matrix:
         include:
           - { arch: x64, target: x86_64-pc-windows-msvc }
-          - { arch: arm64, target: aarch64-pc-windows-msvc }
     steps:
       - uses: actions/checkout@v4
 

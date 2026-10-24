@@ -287,7 +287,7 @@ and lists the tarball, which checks the layout without a FreeBSD machine.
 `.github/workflows/kylin-v10-sp1-deb.yml` builds the glibc-2.31-baseline debs for Kylin V10
 SP1 (amd64 + aarch64) that the regular packages above cannot provide: native builds inside an
 Ubuntu 20.04 container, `packaging/linux/kylin/package.sh` writing
-`photocraft-<v>-kylin-<arch>.deb` and `-offline.deb` (bundled runtime dependency closure,
+`photocraft-<v>-kylin-v10-sp1-<arch>.deb` and `-offline.deb` (bundled runtime dependency closure,
 missing-only installer, system-core blacklist). A verify job installs the offline deb into a
 real Kylin V10 SP1 base container and asserts the zero-upgrade invariant, an `ldd` gate and
 the activation command. Pushes to `main` build it; a `v*` tag attaches the debs to that tag's
