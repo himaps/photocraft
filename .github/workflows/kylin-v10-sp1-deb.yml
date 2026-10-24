@@ -303,11 +303,25 @@ jobs:
           Debian 11+. Older systems are not supported — glibc cannot be bundled. The regular
           distro packages (AppImage, deb, rpm) need a newer glibc and live in the main release.
           EOF
+          # The shared Release workflow's draft-release step replaces *all* assets when it runs,
+          # so attach the Kylin debs only after the platform artifacts are present (draft-release
+          # has finished). Up to 120 min: the full multi-platform build is slower than Kylin.
+          echo "Waiting for the shared Release workflow to publish platform artifacts..."
+          waited=0
+          while [ "$waited" -lt 240 ]; do
+            if gh release view "$TAG_NAME" --repo "$REPO" --json assets --jq '.assets[].name' 2>/dev/null \
+                 | grep -qv 'kylin'; then
+              echo "Platform artifacts detected; attaching Kylin debs."
+              break
+            fi
+            sleep 30
+            waited=$((waited+1))
+          done
           if gh release view "$TAG_NAME" --repo "$REPO" >/dev/null 2>&1; then
             gh release upload "$TAG_NAME" --repo "$REPO" --clobber assets/photocraft-*-kylin-*.deb
           else
-            gh release create "$TAG_NAME" --repo "$REPO" \
-              --title "photocraft ${TAG_NAME#v} (Kylin V10 SP1)" \
+            gh release create "$TAG_NAME" --repo "$REPO" --draft \
+              --title "PhotoCraft ${TAG_NAME#v}" \
               --notes-file release_notes.md \
               assets/photocraft-*-kylin-*.deb
           fi
