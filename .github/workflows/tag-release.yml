@@ -1,0 +1,172 @@
+# Tag release for the platforms this repo ships: Windows (x64, arm64) installers and
+# portable zips, plus Linux aarch64 (deb/rpm/tar.gz). macOS, Flatpak and Web are not built
+# here; the shared multi-platform Release workflow (release.yml) stays reserved for the
+# `release` branch. The Kylin V10 SP1 debs come from kylin-v10-sp1-deb.yml, whose
+# publish-release job waits for this workflow's draft release and then attaches the debs.
+name: Tag release (Windows + Linux aarch64)
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tag-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: Windows ${{ matrix.arch }}
+    runs-on: windows-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: x64, target: x86_64-pc-windows-msvc }
+          - { arch: arm64, target: aarch64-pc-windows-msvc }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone craft-fonts (pinned, same ref as the Kylin workflow)
+        shell: bash
+        run: |
+          set -e
+          FONTS="$GITHUB_WORKSPACE/craft-fonts"
+          git init -q "$FONTS"
+          git -C "$FONTS" remote add origin https://github.com/storytold/craft-fonts.git
+          for attempt in 1 2 3; do
+            if git -C "$FONTS" fetch -q --depth 1 origin abb83316d96aa59c1cf64784289e378fe9fa5695; then
+              break
+            fi
+            echo "craft-fonts fetch failed (attempt $attempt), retrying in 20s" >&2
+            [ "$attempt" = "3" ] && exit 1
+            sleep 20
+          done
+          git -C "$FONTS" checkout -q --detach FETCH_HEAD
+          echo "CRAFT_FONTS_DIR=$FONTS" >> "$GITHUB_ENV"
+
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
+
+      - name: Install WiX
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          wix extension add -g WixToolset.UI.wixext/5.0.2 WixToolset.Util.wixext/5.0.2
+
+      # Signing is optional: without WINDOWS_CERTIFICATE or the Azure Trusted Signing set,
+      # sign.ps1 warns and ships unsigned.
+      - name: Build, sign, package
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_SIGNING_ENDPOINT: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          AZURE_SIGNING_ACCOUNT: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          AZURE_CERT_PROFILE: ${{ secrets.AZURE_CERT_PROFILE }}
+          CRAFT_FONTS_REQUIRED: "1"
+        run: ./packaging/windows/package.ps1 -Arch ${{ matrix.arch }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-windows-${{ matrix.arch }}
+          path: dist/release/*
+          if-no-files-found: error
+
+  linux-aarch64:
+    name: Linux aarch64
+    # Native arm runner (no QEMU). Ubuntu 22.04 keeps the glibc floor at 2.35, the same
+    # baseline the regular distro packages have always had.
+    runs-on: ubuntu-22.04-arm
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies (egui/winit/rfd)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential pkg-config curl ca-certificates \
+            libxkbcommon-dev libwayland-dev libx11-dev libxrandr-dev libxi-dev \
+            libgl1-mesa-dev libgtk-3-dev
+
+      - name: Install nfpm (deb/rpm packager)
+        run: |
+          curl -sSfL -o /tmp/nfpm.deb https://github.com/goreleaser/nfpm/releases/download/v2.47.0/nfpm_2.47.0_arm64.deb
+          sudo dpkg -i /tmp/nfpm.deb
+
+      - name: Clone craft-fonts (pinned)
+        run: |
+          set -e
+          git init -q /tmp/craft-fonts
+          git -C /tmp/craft-fonts remote add origin https://github.com/storytold/craft-fonts.git
+          for attempt in 1 2 3; do
+            if git -C /tmp/craft-fonts fetch -q --depth 1 origin abb83316d96aa59c1cf64784289e378fe9fa5695; then
+              break
+            fi
+            echo "craft-fonts fetch failed (attempt $attempt), retrying in 20s" >&2
+            [ "$attempt" = "3" ] && exit 1
+            sleep 20
+          done
+          git -C /tmp/craft-fonts checkout -q --detach FETCH_HEAD
+          echo "CRAFT_FONTS_DIR=/tmp/craft-fonts" >> "$GITHUB_ENV"
+
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+        with:
+          toolchain: stable
+
+      # AppImage is left out: it needs downloaded tooling, and the deb/rpm/tar.gz cover the
+      # aarch64 distros this build targets.
+      - name: Build and package
+        env:
+          CRAFT_FONTS_REQUIRED: "1"
+        run: packaging/linux/package.sh --formats "deb rpm tar"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-linux-aarch64
+          path: dist/release/*
+          if-no-files-found: error
+
+  publish:
+    name: Draft the tag's GitHub release
+    if: "!cancelled() && !contains(needs.*.result, 'failure')"
+    needs: [windows, linux-aarch64]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: artifacts
+          merge-multiple: true
+
+      # The Kylin workflow's publish-release job waits for a non-Kylin asset to appear here,
+      # then attaches its debs to this same release.
+      - name: Create or update the draft release
+        working-directory: artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          set -e
+          sha256sum -- * > SHA256SUMS.txt
+          if gh release view "$TAG_NAME" --repo "$REPO" >/dev/null 2>&1; then
+            echo "Release $TAG_NAME exists; replacing the Windows/Linux assets"
+            gh release upload "$TAG_NAME" --repo "$REPO" --clobber -- *
+          else
+            echo "Creating draft release $TAG_NAME"
+            gh release create "$TAG_NAME" --repo "$REPO" --draft \
+              --title "PhotoCraft ${TAG_NAME#v}" --generate-notes -- *
+          fi
+          ls -lh

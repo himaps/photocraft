@@ -3,7 +3,6 @@ name: Release
 on:
   push:
     branches: [release]
-    tags: ['v*']
   workflow_dispatch:
     inputs:
       version:
@@ -27,11 +26,6 @@ jobs:
       app-title: PhotoCraft
       craft-fonts-ref: abb83316d96aa59c1cf64784289e378fe9fa5695
       version: ${{ inputs.version }}
-      # Platforms not yet exercised on this repo's CI: build the well-tested ones on tags and
-      # opt back in once they have passed here. macOS/Windows/Linux/Flatpak/Web stay enabled.
-      has-riscv64: false
-      has-freebsd: false
-      has-arch: false
     secrets:
       APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
       APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
