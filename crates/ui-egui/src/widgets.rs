@@ -1248,7 +1248,13 @@ pub fn pill_button(ui: &mut Ui, label: &str, primary: bool) -> Response {
         };
         (fill, Stroke::NONE, t.accent_text)
     } else {
-        let fill = if down { t.pressed } else if resp.hovered() { t.hover } else { t.card };
+        let fill = if down {
+            t.pressed
+        } else if resp.hovered() {
+            t.hover
+        } else {
+            t.card
+        };
         (fill, Stroke::new(1.0, t.card_border), t.text)
     };
     ui.painter().rect(rect, CornerRadius::same(14), fill, stroke, StrokeKind::Inside);

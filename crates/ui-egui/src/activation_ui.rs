@@ -75,10 +75,7 @@ fn gate_native(app: &mut PhotocraftApp, ui: &mut egui::Ui) -> bool {
                 ui.add_space(120.0);
                 ui.label(egui::RichText::new(tl!("Activate PhotoCraft")).font(theme::semibold(20.0)));
                 ui.add_space(10.0);
-                ui.label(
-                    egui::RichText::new(tl!("Cannot read a hardware identifier on this machine; activation is not possible."))
-                        .color(egui::Color32::RED),
-                );
+                ui.label(egui::RichText::new(tl!("Cannot read a hardware identifier on this machine; activation is not possible.")).color(egui::Color32::RED));
             });
         });
         return false;
@@ -90,11 +87,7 @@ fn gate_native(app: &mut PhotocraftApp, ui: &mut egui::Ui) -> bool {
     }
 
     // The machine code is derived once; rendering it is pure layout.
-    let machine_text = app
-        .activation
-        .machine_code
-        .get_or_insert_with(|| photocraft_activation::machine_code(&id).render())
-        .clone();
+    let machine_text = app.activation.machine_code.get_or_insert_with(|| photocraft_activation::machine_code(&id).render()).clone();
     let t = theme::Tokens::get(ui.ctx());
     let mut activate = false;
 
@@ -114,39 +107,27 @@ fn gate_native(app: &mut PhotocraftApp, ui: &mut egui::Ui) -> bool {
             ui.add_space(20.0);
 
             // Machine code, inside a bordered card.
-            egui::Frame::default()
-                .fill(t.field)
-                .corner_radius(8.0)
-                .inner_margin(14.0)
-                .show(ui, |ui| {
-                    ui.set_width(420.0);
-                    ui.label(tl!("Your machine code — send it to the author:"));
-                    ui.add_space(4.0);
-                    ui.horizontal(|ui| {
-                        ui.label(egui::RichText::new(&machine_text).font(theme::semibold(16.0)).color(t.accent_text));
-                        if widgets::pill_button(ui, tl!("Copy"), false).clicked() {
-                            ui.ctx().copy_text(machine_text.clone());
-                        }
-                    });
+            egui::Frame::default().fill(t.field).corner_radius(8.0).inner_margin(14.0).show(ui, |ui| {
+                ui.set_width(420.0);
+                ui.label(tl!("Your machine code — send it to the author:"));
+                ui.add_space(4.0);
+                ui.horizontal(|ui| {
+                    ui.label(egui::RichText::new(&machine_text).font(theme::semibold(16.0)).color(t.accent_text));
+                    if widgets::pill_button(ui, tl!("Copy"), false).clicked() {
+                        ui.ctx().copy_text(machine_text.clone());
+                    }
                 });
+            });
 
             ui.add_space(16.0);
 
             // Activation code input, inside a bordered card.
-            egui::Frame::default()
-                .fill(t.field)
-                .corner_radius(8.0)
-                .inner_margin(14.0)
-                .show(ui, |ui| {
-                    ui.set_width(420.0);
-                    ui.label(tl!("Paste the activation code you received:"));
-                    ui.add_space(4.0);
-                    ui.add(
-                        egui::TextEdit::singleline(&mut app.activation.typed)
-                            .hint_text(tl!("four words joined by -"))
-                            .desired_width(f32::INFINITY),
-                    );
-                });
+            egui::Frame::default().fill(t.field).corner_radius(8.0).inner_margin(14.0).show(ui, |ui| {
+                ui.set_width(420.0);
+                ui.label(tl!("Paste the activation code you received:"));
+                ui.add_space(4.0);
+                ui.add(egui::TextEdit::singleline(&mut app.activation.typed).hint_text(tl!("four words joined by -")).desired_width(f32::INFINITY));
+            });
 
             ui.add_space(10.0);
             if let Some(error) = &app.activation.error {
@@ -171,18 +152,12 @@ fn gate_native(app: &mut PhotocraftApp, ui: &mut egui::Ui) -> bool {
             Err(ActivationError::Write(path, error)) => {
                 // The install directory is root-owned on Linux; the words are safe to quote
                 // (they come from the 64-word table), so the exact command is shown.
-                let code =
-                    photocraft_activation::parse(&app.activation.typed).map(|c| c.render()).unwrap_or_else(|_| app.activation.typed.trim().to_owned());
-                app.activation.error =
-                    Some(crate::i18n::fmt(tl!("Couldn't write {path}: {error}"), &[("path", path.as_str()), ("error", error.as_str())]));
+                let code = photocraft_activation::parse(&app.activation.typed).map(|c| c.render()).unwrap_or_else(|_| app.activation.typed.trim().to_owned());
+                app.activation.error = Some(crate::i18n::fmt(tl!("Couldn't write {path}: {error}"), &[("path", path.as_str()), ("error", error.as_str())]));
                 crate::notices::post(
                     app,
                     tl!("To store the activation, run this in a terminal and restart:"),
-                    vec![format!(
-                        "sudo mkdir -p \"$(dirname '{path}')\" && printf '%s\\n' '{code}' | sudo tee '{path}' >/dev/null",
-                        path = path,
-                        code = code
-                    )],
+                    vec![format!("sudo mkdir -p \"$(dirname '{path}')\" && printf '%s\\n' '{code}' | sudo tee '{path}' >/dev/null", path = path, code = code)],
                     false,
                     None,
                 );

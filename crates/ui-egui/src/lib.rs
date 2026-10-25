@@ -15,6 +15,7 @@ macro_rules! tl {
 }
 
 pub mod actions;
+pub mod activation_ui;
 pub mod adjust_dialog;
 pub mod adjust_editors;
 pub mod adjust_preview;
@@ -35,7 +36,6 @@ pub(crate) mod brush_cursor;
 pub mod brush_panel;
 pub mod brush_picker;
 pub mod brush_preset_dialog;
-pub mod activation_ui;
 pub mod brush_preview;
 pub mod brush_resize;
 pub mod brush_sections;
