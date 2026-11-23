@@ -6491,6 +6491,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "photocraft-activation"
+version = "0.23.1"
+dependencies = [
+ "sha2 0.11.1",
+ "thiserror 2.0.21",
+ "winsafe",
+]
+
+[[package]]
 name = "photocraft-algo"
 version = "0.23.1"
 dependencies = [
@@ -6552,6 +6561,7 @@ dependencies = [
  "craft-cms 0.1.0 (git+https://github.com/storytold/craft-libs?rev=8d436f486a2e890930ffdf10b602935feb492c97)",
  "craft-image-codecs",
  "craft-psd",
+ "photocraft-activation",
  "photocraft-automation",
  "photocraft-doc",
  "photocraft-engine",
@@ -6939,6 +6949,7 @@ dependencies = [
  "egui_extras",
  "egui_kittest",
  "log",
+ "photocraft-activation",
  "photocraft-algo",
  "photocraft-color",
  "photocraft-compose",
