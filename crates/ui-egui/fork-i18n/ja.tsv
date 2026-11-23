@@ -1,0 +1,20 @@
+	Activate PhotoCraft	PhotoCraft をアクティベート
+	Cannot read a hardware identifier on this machine; activation is not possible.	このマシンでハードウェア識別子を読み取れないため、アクティベートできません。
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	アクティベーションは無料です。このインストールが存在することを作者に伝えるだけです。コードは、あなたが自分で送信しない限り、このマシンから出ません。
+	four words joined by -	- でつないだ 4 個の単語
+	Activate	アクティベート
+	Activated. Thank you!	アクティベートされました。ありがとうございます！
+	Couldn't write {path}: {error}	{path} に書き込めませんでした: {error}
+	To store the activation, run this in a terminal and restart:	アクティベーションを保存するには、ターミナルでこれを実行して再起動してください:
+	That word is not in the table: {word}	その単語は語表にありません: {word}
+	A code has {expected} words, this one has {got}.	コードは {expected} 語ですが、これには {got} 語あります。
+	The activation code does not match this machine.	アクティベーションコードがこのマシンと一致しません。
+	Copy	コピー
+	Offline activation · free to use · the code is bound to this machine	オフライン認証 · 無料 · コードはこのマシンに紐付け
+	Machine code	マシンコード
+	Send this machine code to the maintainer to receive its activation code	マシンコードをメンテナに送り、対応するアクティベーションコードを受け取ってください
+	Activation code	アクティベーションコード
+	Copied	コピーしました
+	The activation code comes from the maintainer's offline activation tool and matches this machine's code	アクティベーションコードはメンテナのオフラインツールが生成し、このマシンのコードと対応します
+	Quit	終了
+	Cannot read the machine identifier	マシン識別子を読み取れません

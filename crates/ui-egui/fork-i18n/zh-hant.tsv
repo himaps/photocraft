@@ -1,0 +1,20 @@
+	Activate PhotoCraft	啟用 PhotoCraft
+	Cannot read a hardware identifier on this machine; activation is not possible.	無法讀取本機的硬體識別碼，無法啟用。
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	啟用是免費的：它只是告知作者這份安裝的存在。程式碼會留在這台機器上，除非您親自傳送。
+	four words joined by -	4 個詞，以 - 連接
+	Activate	啟用
+	Activated. Thank you!	已啟用。感謝！
+	Couldn't write {path}: {error}	無法寫入 {path}：{error}
+	To store the activation, run this in a terminal and restart:	要儲存啟用，請在終端機中執行以下命令並重新啟動：
+	That word is not in the table: {word}	該詞不在詞表中：{word}
+	A code has {expected} words, this one has {got}.	啟用碼應為 {expected} 個詞，此處為 {got} 個。
+	The activation code does not match this machine.	啟用碼與本機不符。
+	Copy	複製
+	Offline activation · free to use · the code is bound to this machine	離線啟用 · 免費使用 · 啟用碼與本機綁定
+	Machine code	本機機器碼
+	Send this machine code to the maintainer to receive its activation code	把機器碼寄給維護者，換取對應的啟用碼
+	Activation code	輸入啟用碼
+	Copied	已複製
+	The activation code comes from the maintainer's offline activation tool and matches this machine's code	啟用碼由維護者透過離線啟用工具產生，與本機機器碼一一對應
+	Quit	結束應用
+	Cannot read the machine identifier	無法讀取機器識別碼

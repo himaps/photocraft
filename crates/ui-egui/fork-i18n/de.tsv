@@ -1,0 +1,20 @@
+	Activate PhotoCraft	PhotoCraft aktivieren
+	Cannot read a hardware identifier on this machine; activation is not possible.	Auf dieser Maschine konnte keine Hardware-Kennung gelesen werden; eine Aktivierung ist nicht möglich.
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	Die Aktivierung ist kostenlos: Sie teilt dem Autor nur mit, dass diese Installation existiert. Der Code bleibt auf dieser Maschine, bis Sie ihn selbst senden.
+	four words joined by -	vier Wörter, durch - verbunden
+	Activate	Aktivieren
+	Activated. Thank you!	Aktiviert. Vielen Dank!
+	Couldn't write {path}: {error}	{path} konnte nicht geschrieben werden: {error}
+	To store the activation, run this in a terminal and restart:	Um die Aktivierung zu speichern, führen Sie dies in einem Terminal aus und starten Sie neu:
+	That word is not in the table: {word}	Dieses Wort ist nicht in der Tabelle: {word}
+	A code has {expected} words, this one has {got}.	Ein Code hat {expected} Wörter, dieser hat {got}.
+	The activation code does not match this machine.	Der Aktivierungscode passt nicht zu dieser Maschine.
+	Copy	Kopieren
+	Offline activation · free to use · the code is bound to this machine	Offline-Aktivierung · kostenlos · der Code ist an diesen Rechner gebunden
+	Machine code	Maschinencode
+	Send this machine code to the maintainer to receive its activation code	Schick diesen Maschinencode an den Maintainer, um den passenden Aktivierungscode zu erhalten
+	Activation code	Aktivierungscode
+	Copied	Kopiert
+	The activation code comes from the maintainer's offline activation tool and matches this machine's code	Den Aktivierungscode erzeugt das Offline-Werkzeug des Maintainers; er passt zum Maschinencode
+	Quit	Beenden
+	Cannot read the machine identifier	Maschinenkennung nicht lesbar

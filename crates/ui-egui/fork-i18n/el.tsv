@@ -1,0 +1,20 @@
+	Activate PhotoCraft	Ενεργοποίηση του PhotoCraft
+	Cannot read a hardware identifier on this machine; activation is not possible.	Δεν είναι δυνατή η ανάγνωση αναγνωριστικού υλικού σε αυτό το μηχάνημα· η ενεργοποίηση δεν είναι δυνατή.
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	Η ενεργοποίηση είναι δωρεάν: απλώς ενημερώνει τον δημιουργό ότι αυτή η εγκατάσταση υπάρχει. Ο κωδικός παραμένει σε αυτό το μηχάνημα μέχρι να τον στείλετε εσείς.
+	four words joined by -	τέσσερις λέξεις ενωμένες με -
+	Activate	Ενεργοποίηση
+	Activated. Thank you!	Ενεργοποιήθηκε. Ευχαριστούμε!
+	Couldn't write {path}: {error}	Δεν ήταν δυνατή η εγγραφή του {path}: {error}
+	To store the activation, run this in a terminal and restart:	Για να αποθηκευτεί η ενεργοποίηση, εκτελέστε αυτό σε τερματικό και επανεκκινήστε:
+	That word is not in the table: {word}	Αυτή η λέξη δεν υπάρχει στον πίνακα: {word}
+	A code has {expected} words, this one has {got}.	Ένας κωδικός έχει {expected} λέξεις, αυτός έχει {got}.
+	The activation code does not match this machine.	Ο κωδικός ενεργοποίησης δεν αντιστοιχεί σε αυτό το μηχάνημα.
+	Copy	Αντιγραφή
+	Offline activation · free to use · the code is bound to this machine	Ενεργοποίηση χωρίς σύνδεση · δωρεάν · ο κωδικός συνδέεται με αυτό το μηχάνημα
+	Machine code	Κωδικός μηχανής
+	Send this machine code to the maintainer to receive its activation code	Στείλτε αυτόν τον κωδικό στον συντηρητή για να λάβετε τον κωδικό ενεργοποίησης
+	Activation code	Κωδικός ενεργοποίησης
+	Copied	Αντιγράφηκε
+	The activation code comes from the maintainer's offline activation tool and matches this machine's code	Ο κωδικός ενεργοποίησης παράγεται από το εργαλείο του συντηρητή και αντιστοιχεί στον κωδικό αυτού του μηχανήματος
+	Quit	Έξοδος
+	Cannot read the machine identifier	Αδυναμία ανάγνωσης του αναγνωριστικού μηχανήματος

@@ -1,0 +1,20 @@
+	Activate PhotoCraft	Активувати PhotoCraft
+	Cannot read a hardware identifier on this machine; activation is not possible.	Не вдалося прочитати апаратний ідентифікатор на цій машині; активація неможлива.
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	Активація безкоштовна: вона лише повідомляє автору, що ця інсталяція існує. Код залишається на цій машині, доки ви самі його не надішлете.
+	four words joined by -	чотири слова через дефіс
+	Activate	Активувати
+	Activated. Thank you!	Активовано. Дякуємо!
+	Couldn't write {path}: {error}	Не вдалося записати {path}: {error}
+	To store the activation, run this in a terminal and restart:	Щоб зберегти активацію, виконайте це в терміналі та перезапустіть:
+	That word is not in the table: {word}	Цього слова немає в таблиці: {word}
+	A code has {expected} words, this one has {got}.	У коді {expected} слів, тут — {got}.
+	The activation code does not match this machine.	Код активації не відповідає цій машині.
+	Copy	Копіювати
+	Offline activation · free to use · the code is bound to this machine	Автономна активація · безкоштовно · код прив'язаний до цього комп'ютера
+	Machine code	Машинний код
+	Send this machine code to the maintainer to receive its activation code	Надішліть цей машинний код супровіднику, щоб отримати код активації
+	Activation code	Код активації
+	Copied	Скопійовано
+	The activation code comes from the maintainer's offline activation tool and matches this machine's code	Код активації генерує офлайн-інструмент супровідника; він відповідає коду цього комп'ютера
+	Quit	Вийти
+	Cannot read the machine identifier	Не вдалося прочитати ідентифікатор машини

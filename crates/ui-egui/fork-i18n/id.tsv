@@ -1,0 +1,20 @@
+	Activate PhotoCraft	Aktifkan PhotoCraft
+	Cannot read a hardware identifier on this machine; activation is not possible.	Tidak dapat membaca pengenal perangkat keras pada mesin ini; aktivasi tidak dimungkinkan.
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	Aktivasi gratis: itu hanya memberi tahu penulis bahwa instalasi ini ada. Kode tetap di mesin ini sampai Anda mengirimnya sendiri.
+	four words joined by -	empat kata yang dihubungkan dengan -
+	Activate	Aktifkan
+	Activated. Thank you!	Diaktifkan. Terima kasih!
+	Couldn't write {path}: {error}	Tidak dapat menulis {path}: {error}
+	To store the activation, run this in a terminal and restart:	Untuk menyimpan aktivasi, jalankan ini di terminal lalu mulai ulang:
+	That word is not in the table: {word}	Kata itu tidak ada dalam tabel: {word}
+	A code has {expected} words, this one has {got}.	Kode memiliki {expected} kata, yang ini memiliki {got}.
+	The activation code does not match this machine.	Kode aktivasi tidak cocok dengan mesin ini.
+	Copy	Salin
+	Offline activation · free to use · the code is bound to this machine	Aktivasi offline · gratis · kode terikat ke mesin ini
+	Machine code	Kode mesin
+	Send this machine code to the maintainer to receive its activation code	Kirim kode mesin ini ke pemelihara untuk menerima kode aktivasinya
+	Activation code	Kode aktivasi
+	Copied	Tersalin
+	The activation code comes from the maintainer's offline activation tool and matches this machine's code	Kode aktivasi dibuat oleh alat offline pemelihara dan berpasangan dengan kode mesin ini
+	Quit	Keluar
+	Cannot read the machine identifier	Tidak dapat membaca pengenal mesin

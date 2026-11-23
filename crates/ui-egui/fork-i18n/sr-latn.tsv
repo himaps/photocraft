@@ -1,0 +1,20 @@
+	Activate PhotoCraft	Aktiviraj PhotoCraft
+	Cannot read a hardware identifier on this machine; activation is not possible.	Na ovom računaru nije moguće pročitati hardverski identifikator; aktiviranje nije moguće.
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	Aktiviranje je besplatno: samo obaveštava autora da ova instalacija postoji. Kod ostaje na ovom računaru dok ga sami ne pošaljete.
+	four words joined by -	četiri reči spojene crticom
+	Activate	Aktiviraj
+	Activated. Thank you!	Aktivirano. Hvala!
+	Couldn't write {path}: {error}	Nije moguće pisati {path}: {error}
+	To store the activation, run this in a terminal and restart:	Da biste sačuvali aktiviranje, pokrenite ovo u terminalu i ponovo pokrenite program:
+	That word is not in the table: {word}	Ta reč nije u tabeli: {word}
+	A code has {expected} words, this one has {got}.	Kod ima {expected} reči, ovaj ima {got}.
+	The activation code does not match this machine.	Aktivacioni kod ne odgovara ovom računaru.
+	Copy	Kopiraj
+	Offline activation · free to use · the code is bound to this machine	Aktivacija van mreže · besplatno · kod je vezan za ovaj računar
+	Machine code	Mašinski kod
+	Send this machine code to the maintainer to receive its activation code	Pošaljite ovaj mašinski kod održavaocu da biste dobili odgovarajući aktivacioni kod
+	Activation code	Aktivacioni kod
+	Copied	Kopirano
+	The activation code comes from the maintainer's offline activation tool and matches this machine's code	Aktivacioni kod generiše offline alat održavaoca i odgovara kodu ovog računara
+	Quit	Izađi
+	Cannot read the machine identifier	Nije moguće pročitati identifikator računara

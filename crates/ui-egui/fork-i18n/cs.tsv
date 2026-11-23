@@ -1,0 +1,20 @@
+	Activate PhotoCraft	Aktivovat PhotoCraft
+	Cannot read a hardware identifier on this machine; activation is not possible.	Na tomto počítači nelze přečíst hardwarový identifikátor; aktivace není možná.
+	Activation is free: it only tells the author that this installation exists. The code stays on this machine until you send it yourself.	Aktivace je zdarma: pouze autorovi říká, že tato instalace existuje. Kód zůstává na tomto počítači, dokud jej sami neodešlete.
+	four words joined by -	čtyři slova spojená pomlčkou
+	Activate	Aktivovat
+	Activated. Thank you!	Aktivováno. Děkujeme!
+	Couldn't write {path}: {error}	Nezdařilo se zapsat {path}: {error}
+	To store the activation, run this in a terminal and restart:	Chcete-li aktivaci uložit, spusťte to v terminálu a restartujte:
+	That word is not in the table: {word}	Toto slovo není v tabulce: {word}
+	A code has {expected} words, this one has {got}.	Kód má {expected} slov, tento má {got}.
+	The activation code does not match this machine.	Aktivační kód neodpovídá tomuto počítači.
+	Copy	Kopírovat
+	Offline activation · free to use · the code is bound to this machine	Offline aktivace · zdarma · kód je vázán na tento počítač
+	Machine code	Kód stroje
+	Send this machine code to the maintainer to receive its activation code	Pošlete tento kód stroje správci a obdržíte odpovídající aktivační kód
+	Activation code	Aktivační kód
+	Copied	Zkopírováno
+	The activation code comes from the maintainer's offline activation tool and matches this machine's code	Aktivační kód vytváří offline nástroj správce a odpovídá kódu tohoto stroje
+	Quit	Ukončit
+	Cannot read the machine identifier	Nelze přečíst identifikátor stroje

@@ -9,6 +9,8 @@ name: Windows ARM64
 # schedules, and the nightly ARM64 smoke run is not needed when release builds are triggered by
 # hand.
 on:
+  push:
+    branches: [release]
   pull_request:
     paths:
       - .github/workflows/windows-arm64.yml
@@ -29,3 +31,5 @@ jobs:
     with:
       app-name: photocraft
       app-dir: PhotoCraft
+      install-relative-path: Programs/ArtCraft/PhotoCraft
+      install-scope: perUser
