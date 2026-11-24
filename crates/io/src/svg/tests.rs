@@ -435,8 +435,13 @@ fn a_single_path_clip_becomes_the_groups_vector_mask() {
         .collect();
     let off = ours.chunks(4).zip(theirs.chunks(4)).filter(|(a, b)| a.iter().zip(*b).any(|(x, y)| x.abs_diff(*y) > 48)).count();
     assert!(off < 64, "{off} pixels differ");
-    // The report's file: PhotoCraft's own icon opens without the clip-path warning.
-    let icon = import_svg("photocraft.svg", include_bytes!("../../../../assets/app-icon/photocraft.svg")).unwrap();
+    // The report's file, in its shape: a drawing clipped by a rounded square opens without the
+    // clip-path warning and the square becomes a vector mask. A small drawing of that shape
+    // stands in for the icon, whose artwork is this fork's own (a raster tile, no vector mask).
+    const CLIPPED: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+            <defs><clipPath id="tile"><rect width="64" height="64" rx="14"/></clipPath></defs>
+            <g clip-path="url(#tile)"><rect width="64" height="64" fill="#2f7bf5"/><circle cx="32" cy="32" r="18" fill="#efe9dc"/></g></svg>"##;
+    let icon = import_svg("clipped-tile.svg", CLIPPED).unwrap();
     assert!(icon.warnings.iter().all(|w| !w.contains("clip-path")), "{:?}", icon.warnings);
     assert!(icon.document.layers.iter().any(|l| l.vector_mask.is_some()), "its rounded square is a vector mask");
     // Two shapes in the clip: rasterised, and said so.

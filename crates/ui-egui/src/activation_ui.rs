@@ -121,11 +121,7 @@ fn gate_native(app: &mut PhotocraftApp, ui: &mut egui::Ui) -> bool {
         ui.add_space(16.0);
         ui.label(egui::RichText::new(tl!("Activate PhotoCraft")).size(20.0).strong());
         ui.add_space(6.0);
-        ui.label(
-            egui::RichText::new(tl!("Offline activation · free to use · the code is bound to this machine"))
-                .size(14.0)
-                .color(t.text_dim),
-        );
+        ui.label(egui::RichText::new(tl!("Offline activation · free to use · the code is bound to this machine")).size(14.0).color(t.text_dim));
         ui.add_space(28.0);
 
         // The machine code, as word chips, with the copy affordance on the label row.
@@ -143,11 +139,7 @@ fn gate_native(app: &mut PhotocraftApp, ui: &mut egui::Ui) -> bool {
         ui.add_space(8.0);
         word_chips(ui, &t, &words);
         ui.add_space(8.0);
-        ui.label(
-            egui::RichText::new(tl!("Send this machine code to the maintainer to receive its activation code"))
-                .size(12.0)
-                .color(t.text_dim),
-        );
+        ui.label(egui::RichText::new(tl!("Send this machine code to the maintainer to receive its activation code")).size(12.0).color(t.text_dim));
         ui.add_space(24.0);
 
         // The activation code received back. A failed attempt keeps the typed words.
@@ -184,11 +176,9 @@ fn gate_native(app: &mut PhotocraftApp, ui: &mut egui::Ui) -> bool {
         ui.separator();
         ui.add_space(16.0);
         ui.label(
-            egui::RichText::new(tl!(
-                "The activation code comes from the maintainer's offline activation tool and matches this machine's code"
-            ))
-            .size(12.0)
-            .color(t.text_dim),
+            egui::RichText::new(tl!("The activation code comes from the maintainer's offline activation tool and matches this machine's code"))
+                .size(12.0)
+                .color(t.text_dim),
         );
         ui.add_space(16.0);
         if ghost_button(ui, &t, tl!("Quit")).clicked() {
@@ -208,19 +198,12 @@ fn gate_native(app: &mut PhotocraftApp, ui: &mut egui::Ui) -> bool {
                 // The file is the user's own (`~/.photocraft/.license.md`), so the fallback needs
                 // no administrator rights; the words are safe to quote (they come from the word
                 // table), so the exact command is shown.
-                let code = photocraft_activation::parse(&app.activation.typed)
-                    .map(|c| c.render())
-                    .unwrap_or_else(|_| app.activation.typed.trim().to_owned());
-                app.activation.error =
-                    Some(crate::i18n::fmt(tl!("Couldn't write {path}: {error}"), &[("path", path.as_str()), ("error", error.as_str())]));
+                let code = photocraft_activation::parse(&app.activation.typed).map(|c| c.render()).unwrap_or_else(|_| app.activation.typed.trim().to_owned());
+                app.activation.error = Some(crate::i18n::fmt(tl!("Couldn't write {path}: {error}"), &[("path", path.as_str()), ("error", error.as_str())]));
                 crate::notices::post(
                     app,
                     tl!("To store the activation, run this in a terminal and restart:"),
-                    vec![format!(
-                        "mkdir -p \"$(dirname '{path}')\" && printf '# photocraft\\n- 激活码: {code}\\n' > '{path}'",
-                        path = path,
-                        code = code
-                    )],
+                    vec![format!("mkdir -p \"$(dirname '{path}')\" && printf '# photocraft\\n- 激活码: {code}\\n' > '{path}'", path = path, code = code)],
                     Tone::Neutral,
                     None,
                 );
@@ -290,11 +273,7 @@ fn bare_screen(ui: &mut egui::Ui, detail: Option<String>) {
         let t = crate::theme::Tokens::get(ui.ctx());
         ui.label(egui::RichText::new(tl!("Cannot read the machine identifier")).size(15.0).strong().color(t.danger));
         ui.add_space(12.0);
-        ui.label(
-            egui::RichText::new(tl!("Cannot read a hardware identifier on this machine; activation is not possible."))
-                .size(13.0)
-                .color(t.text_dim),
-        );
+        ui.label(egui::RichText::new(tl!("Cannot read a hardware identifier on this machine; activation is not possible.")).size(13.0).color(t.text_dim));
         if let Some(detail) = detail {
             ui.add_space(8.0);
             field_box(ui, &t, Margin::symmetric(8, 6), Stroke::NONE, |ui| {
@@ -313,16 +292,11 @@ fn mark(ui: &mut egui::Ui, accent: Color32) {
     use std::sync::OnceLock;
     static TEXTURE: OnceLock<Option<egui::TextureHandle>> = OnceLock::new();
     let texture = TEXTURE.get_or_init(|| {
-        let image = photocraft_codecs::decode(MARK_PNG)
-            .ok()
-            .map(|img| img.convert(photocraft_codecs::ChannelLayout::Rgba, photocraft_codecs::SampleType::U8))?;
+        let image =
+            photocraft_codecs::decode(MARK_PNG).ok().map(|img| img.convert(photocraft_codecs::ChannelLayout::Rgba, photocraft_codecs::SampleType::U8))?;
         let size = [image.width() as usize, image.height() as usize];
         let data = image.data().to_vec();
-        Some(ui.ctx().load_texture(
-            "activation-gate-mark",
-            egui::ColorImage::from_rgba_unmultiplied(size, &data),
-            egui::TextureOptions::LINEAR,
-        ))
+        Some(ui.ctx().load_texture("activation-gate-mark", egui::ColorImage::from_rgba_unmultiplied(size, &data), egui::TextureOptions::LINEAR))
     });
     let (rect, _) = ui.allocate_exact_size(vec2(MARK_SIZE, MARK_SIZE), Sense::hover());
     match texture {
@@ -344,10 +318,7 @@ fn word_chips(ui: &mut egui::Ui, t: &crate::theme::Tokens, words: &[&str]) {
     // The words fit one line (four short words); measure the row, give the container exactly
     // that width plus its padding, and centre the container block in the card.
     let font = FontId::new(18.0, FontFamily::Proportional);
-    let sizes: Vec<Vec2> = words
-        .iter()
-        .map(|w| ui.painter().layout_no_wrap((*w).to_owned(), font.clone(), t.text).size() + vec2(24.0, 12.0))
-        .collect();
+    let sizes: Vec<Vec2> = words.iter().map(|w| ui.painter().layout_no_wrap((*w).to_owned(), font.clone(), t.text).size() + vec2(24.0, 12.0)).collect();
     let gap = 8.0;
     let total: f32 = sizes.iter().map(|s| s.x).sum::<f32>() + gap * (words.len().saturating_sub(1)) as f32;
     let block_width = (total + 32.0).min(ui.available_width());
@@ -363,13 +334,7 @@ fn word_chips(ui: &mut egui::Ui, t: &crate::theme::Tokens, words: &[&str]) {
                 ui.horizontal(|ui| {
                     for (word, size) in words.iter().zip(sizes) {
                         let (rect, _) = ui.allocate_exact_size(size, Sense::hover());
-                        ui.painter().rect(
-                            rect,
-                            CornerRadius::same(8),
-                            t.field,
-                            Stroke::new(1.0, t.accent.gamma_multiply(0.2)),
-                            StrokeKind::Inside,
-                        );
+                        ui.painter().rect(rect, CornerRadius::same(8), t.field, Stroke::new(1.0, t.accent.gamma_multiply(0.2)), StrokeKind::Inside);
                         let galley = ui.painter().layout_no_wrap((*word).to_owned(), font.clone(), t.text);
                         ui.painter().galley(Align2::CENTER_CENTER.pos_in_rect(&rect) - galley.size() / 2.0, galley, t.text);
                     }
@@ -382,19 +347,8 @@ fn word_chips(ui: &mut egui::Ui, t: &crate::theme::Tokens, words: &[&str]) {
 /// frame's inner response (the TextEdit's, when the body adds one) so the caller can read
 /// focus and keys.
 #[cfg(all(feature = "activation-gate", not(target_arch = "wasm32")))]
-fn field_box<R>(
-    ui: &mut egui::Ui,
-    t: &crate::theme::Tokens,
-    margin: Margin,
-    stroke: Stroke,
-    body: impl FnOnce(&mut egui::Ui) -> R,
-) -> egui::InnerResponse<R> {
-    egui::Frame::default()
-        .fill(t.field)
-        .stroke(stroke)
-        .corner_radius(CornerRadius::same(8))
-        .inner_margin(margin)
-        .show(ui, body)
+fn field_box<R>(ui: &mut egui::Ui, t: &crate::theme::Tokens, margin: Margin, stroke: Stroke, body: impl FnOnce(&mut egui::Ui) -> R) -> egui::InnerResponse<R> {
+    egui::Frame::default().fill(t.field).stroke(stroke).corner_radius(CornerRadius::same(8)).inner_margin(margin).show(ui, body)
 }
 
 /// A ghost button: borderless text that shows a quiet hover pill (`text-xs muted`).

@@ -163,8 +163,17 @@ jobs:
           TAG_NAME: ${{ github.ref_name }}
         run: |
           set -e
-          sha256sum -- * > SHA256SUMS.txt
-          cat > release_notes.md <<EOF
+          # The installers: every plain file in this folder except the checksum list itself. The
+          # notes and the checksum scratch files live under notes/, which is skipped.
+          assets=()
+          for f in *; do
+            if [ -f "$f" ] && [ "$f" != SHA256SUMS.txt ]; then
+              assets+=("$f")
+            fi
+          done
+          sha256sum -- "${assets[@]}" > SHA256SUMS.txt
+          mkdir -p notes
+          cat > notes/release_notes.md <<EOF
           PhotoCraft ${TAG_NAME#v}
 
           Installers built from this tag. Pick the one for your system:
@@ -185,44 +194,40 @@ jobs:
           shows, and enter the code you get back. The activation is stored in your home
           folder (\`~/.photocraft/.license.md\`); nothing else is written outside it.
           EOF
-          # The installers and their checksums, never the notes file itself.
-          assets=$(ls | grep -vx release_notes.md)
           # The release may already exist when this job runs: GitHub makes an empty one for a
           # tag that is moved, and the Kylin workflow attaches to it as soon as it finds it. So
           # the notes are written in both cases: this table first, then the Kylin section kept
           # when the Kylin workflow already added one (it replaces its own section on a re-run).
           set_notes() {
-            gh release view "$TAG_NAME" --repo "$REPO" --json body --jq .body > current.md || : > current.md
-            kylin="$(sed -n '/^## Kylin V10 SP1 packages/,$p' current.md)"
+            gh release view "$TAG_NAME" --repo "$REPO" --json body --jq .body > notes/current.md || : > notes/current.md
+            kylin="$(sed -n '/^## Kylin V10 SP1 packages/,$p' notes/current.md)"
             if [ -n "$kylin" ]; then
-              { cat release_notes.md; printf '\n'; printf '%s\n' "$kylin"; } > notes.md
+              { cat notes/release_notes.md; printf '\n'; printf '%s\n' "$kylin"; } > notes/notes.md
             else
-              cp release_notes.md notes.md
+              cp notes/release_notes.md notes/notes.md
             fi
-            gh release edit "$TAG_NAME" --repo "$REPO" --title "PhotoCraft ${TAG_NAME#v}" --notes-file notes.md
+            gh release edit "$TAG_NAME" --repo "$REPO" --title "PhotoCraft ${TAG_NAME#v}" --notes-file notes/notes.md
           }
           # The checksums list every file the release holds, whichever workflow attached it:
           # the Kylin workflow attaches its debs on its own schedule, and each workflow rebuilds
           # this file after its own upload, so the last one to run leaves a complete list.
           rebuild_sums() {
-            rm -rf sums && mkdir sums
-            gh release download "$TAG_NAME" --repo "$REPO" --dir sums \
+            rm -rf notes/sums && mkdir notes/sums
+            gh release download "$TAG_NAME" --repo "$REPO" --dir notes/sums \
               --pattern '*.msi' --pattern '*.zip' --pattern '*.deb' --pattern '*.rpm' --pattern '*.tar.gz'
-            ( cd sums && sha256sum -- * > ../SHA256SUMS.txt )
+            ( cd notes/sums && sha256sum -- * > ../../SHA256SUMS.txt )
             gh release upload "$TAG_NAME" --repo "$REPO" --clobber SHA256SUMS.txt
           }
           if gh release view "$TAG_NAME" --repo "$REPO" >/dev/null 2>&1; then
             echo "Release $TAG_NAME exists; adding or replacing the Windows/Linux assets and the notes"
-            # shellcheck disable=SC2086 # the file list is meant to split
-            gh release upload "$TAG_NAME" --repo "$REPO" --clobber -- $assets
+            gh release upload "$TAG_NAME" --repo "$REPO" --clobber -- "${assets[@]}"
             set_notes
             rebuild_sums
           else
             echo "Publishing release $TAG_NAME"
-            # shellcheck disable=SC2086 # the file list is meant to split
             gh release create "$TAG_NAME" --repo "$REPO" \
               --title "PhotoCraft ${TAG_NAME#v}" \
-              --notes-file release_notes.md -- $assets
+              --notes-file notes/release_notes.md -- "${assets[@]}"
           fi
           echo "Release page: https://github.com/$REPO/releases/tag/$TAG_NAME"
           ls -lh

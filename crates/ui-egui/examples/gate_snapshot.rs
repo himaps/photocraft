@@ -27,16 +27,12 @@ fn main() {
     app.session.prefs.edit(|prefs| prefs.interface.language = lang.clone());
     // The example bypasses `ui_frame`, which sets the interface language every frame: set it here.
     photocraft_ui_egui::i18n::set_current(photocraft_ui_egui::i18n::Lang::from_code(&lang).unwrap_or(photocraft_ui_egui::i18n::Lang::EN));
-    let mut h = egui_kittest::Harness::builder()
-        .with_size(egui::vec2(width, height))
-        .with_max_steps(64)
-        .with_context(app.ctx().clone())
-        .build_ui_state(
-            |ui, app: &mut Box<PhotocraftApp>| {
-                photocraft_ui_egui::activation_ui::gate(app, ui);
-            },
-            app,
-        );
+    let mut h = egui_kittest::Harness::builder().with_size(egui::vec2(width, height)).with_max_steps(64).with_context(app.ctx().clone()).build_ui_state(
+        |ui, app: &mut Box<PhotocraftApp>| {
+            photocraft_ui_egui::activation_ui::gate(app, ui);
+        },
+        app,
+    );
     PhotocraftApp::setup_context(&h.ctx, Default::default());
     // The machine code renders as words of the activation table, which is Chinese-derived; the
     // shipped build draws it with the craft fonts, which a dev checkout has none of. Best effort:

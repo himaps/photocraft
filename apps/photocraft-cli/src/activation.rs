@@ -15,8 +15,7 @@ pub(crate) fn activation(a: &ActivationArgs, out: &mut dyn Write) -> Result<()> 
     }
     // The words may arrive space-separated on a command line; rejoin with the separator before
     // parsing (parse trims whitespace around each `-` token).
-    let machine = photocraft_activation::parse(&a.words.join(&photocraft_activation::SEPARATOR.to_string()))
-        .map_err(|e| CliError::Other(e.to_string()))?;
+    let machine = photocraft_activation::parse(&a.words.join(&photocraft_activation::SEPARATOR.to_string())).map_err(|e| CliError::Other(e.to_string()))?;
     let response = photocraft_activation::activation_response(&machine);
     let _ = writeln!(out, "{}", response.render());
     Ok(())
@@ -35,10 +34,7 @@ mod tests {
         let out = invoke(&["activation", &words]);
         assert_eq!(out.code, 0);
         let answer = out.stdout.trim().to_owned();
-        assert_eq!(
-            photocraft_activation::parse(&answer).unwrap(),
-            photocraft_activation::activation_response(&machine)
-        );
+        assert_eq!(photocraft_activation::parse(&answer).unwrap(), photocraft_activation::activation_response(&machine));
         // Space-separated words are accepted too (how a command line would pass them).
         let spaced = words.split(photocraft_activation::SEPARATOR).collect::<Vec<_>>();
         let out = invoke(&["activation"].iter().copied().chain(spaced.iter().copied()).collect::<Vec<_>>());

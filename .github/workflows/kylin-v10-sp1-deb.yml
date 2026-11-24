@@ -338,8 +338,11 @@ jobs:
             sleep 30
             waited=$((waited+1))
           done
-          echo "Settling: giving the other workflow's upload a minute to finish."
-          sleep 60
+          # The other workflow's job goes on after the installer lands (the notes, then the
+          # checksums, which download every file again): let it finish so this job is the last
+          # to write either.
+          echo "Settling: giving the other workflow two minutes to finish."
+          sleep 120
           if gh release view "$TAG_NAME" --repo "$REPO" >/dev/null 2>&1; then
             echo "Attaching the Kylin debs."
             gh release upload "$TAG_NAME" --repo "$REPO" --clobber assets/photocraft-*-kylin-*.deb

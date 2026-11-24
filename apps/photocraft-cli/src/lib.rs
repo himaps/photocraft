@@ -9,9 +9,9 @@ use std::io::Write;
 use clap::CommandFactory;
 
 mod actions;
+mod activation;
 mod args;
 mod automation;
-mod activation;
 mod batch;
 mod document;
 mod error;
