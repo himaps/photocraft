@@ -177,6 +177,7 @@ jobs:
           | Linux aarch64 (Fedora/RHEL) | \`photocraft-${TAG_NAME#v}-linux-aarch64.rpm\` |
           | Linux aarch64, no install | \`photocraft-${TAG_NAME#v}-linux-aarch64.tar.gz\` |
           | Kylin V10 SP1, x64 / aarch64 | \`photocraft-${TAG_NAME#v}-kylin-v10-sp1-<arch>.deb\` (attached by the Kylin build once it finishes) |
+          | Debug symbols for the Windows build | \`photocraft-${TAG_NAME#v}-windows-x64-symbols.zip\` (for crash reports; not needed to run) |
 
           \`SHA256SUMS.txt\` lists every attached file's checksum.
 
@@ -186,10 +187,36 @@ jobs:
           EOF
           # The installers and their checksums, never the notes file itself.
           assets=$(ls | grep -vx release_notes.md)
+          # The release may already exist when this job runs: GitHub makes an empty one for a
+          # tag that is moved, and the Kylin workflow attaches to it as soon as it finds it. So
+          # the notes are written in both cases: this table first, then the Kylin section kept
+          # when the Kylin workflow already added one (it replaces its own section on a re-run).
+          set_notes() {
+            gh release view "$TAG_NAME" --repo "$REPO" --json body --jq .body > current.md || : > current.md
+            kylin="$(sed -n '/^## Kylin V10 SP1 packages/,$p' current.md)"
+            if [ -n "$kylin" ]; then
+              { cat release_notes.md; printf '\n'; printf '%s\n' "$kylin"; } > notes.md
+            else
+              cp release_notes.md notes.md
+            fi
+            gh release edit "$TAG_NAME" --repo "$REPO" --title "PhotoCraft ${TAG_NAME#v}" --notes-file notes.md
+          }
+          # The checksums list every file the release holds, whichever workflow attached it:
+          # the Kylin workflow attaches its debs on its own schedule, and each workflow rebuilds
+          # this file after its own upload, so the last one to run leaves a complete list.
+          rebuild_sums() {
+            rm -rf sums && mkdir sums
+            gh release download "$TAG_NAME" --repo "$REPO" --dir sums \
+              --pattern '*.msi' --pattern '*.zip' --pattern '*.deb' --pattern '*.rpm' --pattern '*.tar.gz'
+            ( cd sums && sha256sum -- * > ../SHA256SUMS.txt )
+            gh release upload "$TAG_NAME" --repo "$REPO" --clobber SHA256SUMS.txt
+          }
           if gh release view "$TAG_NAME" --repo "$REPO" >/dev/null 2>&1; then
-            echo "Release $TAG_NAME exists; adding or replacing the Windows/Linux assets"
+            echo "Release $TAG_NAME exists; adding or replacing the Windows/Linux assets and the notes"
             # shellcheck disable=SC2086 # the file list is meant to split
             gh release upload "$TAG_NAME" --repo "$REPO" --clobber -- $assets
+            set_notes
+            rebuild_sums
           else
             echo "Publishing release $TAG_NAME"
             # shellcheck disable=SC2086 # the file list is meant to split

@@ -315,20 +315,31 @@ jobs:
               echo "> (see the Kylin V10 SP1 deb workflow run for this tag). The packages are provided as built."
             fi
           } > kylin_notes.md
-          # The tag-release workflow publishes the release; wait for it (up to two hours, the
-          # Windows and Linux builds are slower than this one). Should it have failed or not
-          # have run, publish the release with the Kylin packages alone rather than leave the
-          # tag without a download.
-          echo "Waiting for the tag's release to exist..."
+          # The tag-release workflow publishes the release and attaches the Windows and Linux
+          # files. This job runs last so that the notes and the checksums it writes cover every
+          # file: it waits for one of those files to appear (a release record can exist before
+          # that, empty, when a tag is moved, so "the release exists" is not the signal). Up to
+          # two hours: the Windows and Linux builds are slower than this one. If none appears
+          # (that workflow failed or did not run), the Kylin packages are published on their own
+          # rather than leaving the tag without a download.
+          echo "Waiting for the tag's release to hold the Windows and Linux files..."
+          # One name per line; the Windows installer is the signal (its upload is the last step
+          # of that workflow's publish job, after the Linux files).
+          has_platform_asset() {
+            gh release view "$TAG_NAME" --repo "$REPO" --json assets --jq '.assets[].name' 2>/dev/null \
+              | grep -q '\.msi$'
+          }
           waited=0
-          until gh release view "$TAG_NAME" --repo "$REPO" >/dev/null 2>&1; do
+          until has_platform_asset; do
             if [ "$waited" -ge 240 ]; then
-              echo "No release appeared; creating it with the Kylin packages."
+              echo "No Windows or Linux file appeared; publishing the Kylin packages on their own."
               break
             fi
             sleep 30
             waited=$((waited+1))
           done
+          echo "Settling: giving the other workflow's upload a minute to finish."
+          sleep 60
           if gh release view "$TAG_NAME" --repo "$REPO" >/dev/null 2>&1; then
             echo "Attaching the Kylin debs."
             gh release upload "$TAG_NAME" --repo "$REPO" --clobber assets/photocraft-*-kylin-*.deb
