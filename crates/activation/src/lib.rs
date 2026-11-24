@@ -167,21 +167,92 @@ pub fn activation_code(machine_id: &str) -> Code {
 /// another: the APP_ID is mixed into the response hash alongside the machine code indices.
 pub const APP_ID: &str = "photocraft";
 
-/// Where the activation is stored: a hidden Markdown file in the install directory —
-/// `<exe>/../share/photocraft/.license.md` on Linux (FHS `bin/` → `share/`),
-/// `<exe>/.license.md` on Windows. `None` without an executable path.
-pub fn storage_path() -> Option<PathBuf> {
-    let exe = std::env::current_exe().ok()?;
-    let dir = exe.parent()?;
-    Some(if cfg!(target_os = "linux") { dir.join("../share/photocraft/.license.md") } else { dir.join(".license.md") })
+/// The activation file's name, in every location it has had.
+const LICENSE_FILE: &str = ".license.md";
+
+/// The folder in the user's home directory that holds the activation.
+const DATA_DIR: &str = ".photocraft";
+
+/// The user's home directory for the activation: `%USERPROFILE%` on Windows, `$HOME`
+/// elsewhere. `env` reads a variable, so the rules are testable without touching the process
+/// environment. `None` when the platform reports none.
+fn home_dir(env: impl Fn(&str) -> Option<std::ffi::OsString>) -> Option<PathBuf> {
+    let key = if cfg!(target_os = "windows") { "USERPROFILE" } else { "HOME" };
+    env(key).filter(|d| !d.is_empty()).map(PathBuf::from)
 }
 
-/// Whether `path` holds the activation code of this machine. The `.license.md` file has the
-/// software ID on its first line and the activation code on its second; the software ID must
-/// match [`APP_ID`] so a license from one app cannot activate another.
-pub fn status_at(path: &PathBuf, machine_id: &str) -> Result<Code, ActivationError> {
-    let content = std::fs::read_to_string(path)
-        .map_err(|e| if e.kind() == std::io::ErrorKind::NotFound { ActivationError::NotActivated } else { ActivationError::Io(e.to_string()) })?;
+/// [`data_dir`] for the home directory `env` reports (see [`home_dir`]).
+pub fn data_dir_in(env: impl Fn(&str) -> Option<std::ffi::OsString>) -> Option<PathBuf> {
+    home_dir(env).map(|home| home.join(DATA_DIR))
+}
+
+/// [`storage_path`] for the home directory `env` reports (see [`home_dir`]).
+pub fn storage_path_in(env: impl Fn(&str) -> Option<std::ffi::OsString>) -> Option<PathBuf> {
+    data_dir_in(env).map(|dir| dir.join(LICENSE_FILE))
+}
+
+/// The directory the activation lives in: `~/.photocraft`, the user's own folder, so storing
+/// the code needs no administrator rights (the install directory is root- or admin-owned on
+/// every packaged platform). The same idea as ZCode's `~/.zcode/.license.md`.
+/// `None` when the platform reports no home directory.
+pub fn data_dir() -> Option<PathBuf> {
+    data_dir_in(|key| std::env::var_os(key))
+}
+
+/// Where the activation is stored: `~/.photocraft/.license.md` (see [`data_dir`]). `None`
+/// when the platform reports no home directory.
+pub fn storage_path() -> Option<PathBuf> {
+    storage_path_in(|key| std::env::var_os(key))
+}
+
+/// Where earlier versions stored the activation: a hidden Markdown file in the install
+/// directory — `<exe>/../share/photocraft/.license.md` on Linux (FHS `bin/` → `share/`),
+/// `<exe>/.license.md` on Windows. Read only to migrate (see [`status`]).
+fn legacy_storage_path() -> Option<PathBuf> {
+    let exe = std::env::current_exe().ok()?;
+    let dir = exe.parent()?;
+    Some(if cfg!(target_os = "linux") { dir.join("../share/photocraft").join(LICENSE_FILE) } else { dir.join(LICENSE_FILE) })
+}
+
+/// Whether this machine is activated by the file `legacy` an earlier version stored beside the
+/// installed files, moving it to `target` first (see [`migrate_between`]); then by `target`
+/// itself. What [`status`] does, for two explicit paths.
+pub fn status_migrating(legacy: Option<&std::path::Path>, target: &std::path::Path, machine_id: &str) -> Result<Code, ActivationError> {
+    if let Some(legacy) = legacy {
+        migrate_between(legacy, target, machine_id);
+    }
+    status_at(&target.to_path_buf(), machine_id)
+}
+
+/// Moves the activation in `legacy` to `target`, when `legacy` holds this app's valid code for
+/// this machine and `target` is free: anything else is left alone (the install directory may
+/// not be writable). A failure to move is not an error: the caller then reports the machine as
+/// not activated, and the next start tries again.
+fn migrate_between(legacy: &std::path::Path, target: &std::path::Path, machine_id: &str) {
+    if legacy == target || target.exists() || !legacy.is_file() {
+        return;
+    }
+    let Ok(Ok(stored)) = std::fs::read_to_string(legacy).map(|content| status_content(&content, machine_id)) else { return };
+    let Some(dir) = target.parent() else { return };
+    if std::fs::create_dir_all(dir).is_err() {
+        return;
+    }
+    if std::fs::write(target, license_file_content(&stored)).is_ok() {
+        // The copy is in place; the old file is this installation's and may go (best effort —
+        // it usually is not writable, and then it simply stays).
+        let _ = std::fs::remove_file(legacy);
+    }
+}
+
+/// The `.license.md` text for `code`: the software ID on the first line, the code on the second.
+fn license_file_content(code: &Code) -> String {
+    format!("# {}\n- 激活码: {}\n", APP_ID, code.render())
+}
+
+/// Whether the `.license.md` text `content` holds the activation code of this machine. The
+/// file has the software ID on its first line and the activation code on its second; the
+/// software ID must match [`APP_ID`] so a license from one app cannot activate another.
+fn status_content(content: &str, machine_id: &str) -> Result<Code, ActivationError> {
     let mut lines = content.lines();
     let software = lines.next().ok_or(ActivationError::NotActivated)?.strip_prefix("# ").ok_or(ActivationError::Mismatch)?;
     if software != APP_ID {
@@ -199,16 +270,25 @@ pub fn status_at(path: &PathBuf, machine_id: &str) -> Result<Code, ActivationErr
     Ok(stored)
 }
 
-/// Whether this installation is activated (see [`storage_path`]).
+/// Whether `path` holds the activation code of this machine (see [`status_content`]).
+pub fn status_at(path: &PathBuf, machine_id: &str) -> Result<Code, ActivationError> {
+    let content = std::fs::read_to_string(path)
+        .map_err(|e| if e.kind() == std::io::ErrorKind::NotFound { ActivationError::NotActivated } else { ActivationError::Io(e.to_string()) })?;
+    status_content(&content, machine_id)
+}
+
+/// Whether this machine is activated: an activation stored in [`storage_path`], or one an
+/// earlier version stored beside the installed files, which is moved there first.
 pub fn status(machine_id: &str) -> Result<Code, ActivationError> {
     match storage_path() {
-        Some(p) => status_at(&p, machine_id),
-        None => Err(ActivationError::NoMachineId("no executable path".to_owned())),
+        Some(target) => status_migrating(legacy_storage_path().as_deref(), &target, machine_id),
+        None => Err(ActivationError::NoMachineId("no home directory".to_owned())),
     }
 }
 
 /// Verifies the typed activation code against this machine and stores it as a `.license.md`
 /// recording the activation details. `at` is [`storage_path`]; passing it in keeps this testable.
+/// The directory is created when it does not exist yet.
 pub fn activate_at(at: &PathBuf, machine_id: &str, typed: &str) -> Result<Code, ActivationError> {
     let typed = parse(typed)?;
     let expected = activation_code(machine_id);
@@ -218,8 +298,12 @@ pub fn activate_at(at: &PathBuf, machine_id: &str, typed: &str) -> Result<Code, 
     if typed.indices != expected.indices {
         return Err(ActivationError::Mismatch);
     }
-    let content = format!("# {}\n- 激活码: {}\n", APP_ID, typed.render());
-    std::fs::write(at, content).map_err(|e| ActivationError::Write(at.display().to_string(), e.to_string()))?;
+    if let Some(dir) = at.parent()
+        && let Err(e) = std::fs::create_dir_all(dir)
+    {
+        return Err(ActivationError::Write(dir.display().to_string(), e.to_string()));
+    }
+    std::fs::write(at, license_file_content(&typed)).map_err(|e| ActivationError::Write(at.display().to_string(), e.to_string()))?;
     Ok(typed)
 }
 
@@ -227,7 +311,7 @@ pub fn activate_at(at: &PathBuf, machine_id: &str, typed: &str) -> Result<Code, 
 pub fn activate(machine_id: &str, typed: &str) -> Result<Code, ActivationError> {
     match storage_path() {
         Some(p) => activate_at(&p, machine_id, typed),
-        None => Err(ActivationError::NoMachineId("no executable path".to_owned())),
+        None => Err(ActivationError::NoMachineId("no home directory".to_owned())),
     }
 }
 
@@ -323,13 +407,64 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
+    /// The activation lives in the user's own folder (`~/.photocraft/.license.md`), never
+    /// beside the program: the installed files are admin- or root-owned, the home directory is
+    /// the user's. With no home directory there is nowhere to store it.
     #[test]
-    fn storage_lands_beside_the_installed_files() {
-        let p = storage_path().unwrap_or_default();
-        if cfg!(target_os = "linux") {
-            assert!(p.to_string_lossy().contains("share/photocraft/.license.md"), "{p:?}");
-        } else if cfg!(target_os = "windows") {
-            assert_eq!(p.file_name().map(|s| s.to_string_lossy().to_string()).as_deref(), Some(".license.md"));
-        }
+    fn storage_is_in_the_home_directory_not_beside_the_program() {
+        let env = |key: &str| (key == if cfg!(target_os = "windows") { "USERPROFILE" } else { "HOME" }).then(|| "C:/Users/ann".into());
+        let stored = storage_path_in(env).unwrap();
+        assert!(stored.starts_with(PathBuf::from("C:/Users/ann")), "{} is not under the home directory", stored.display());
+        assert!(stored.to_string_lossy().replace('\\', "/").ends_with("/.photocraft/.license.md"), "{stored:?}");
+        assert!(!stored.to_string_lossy().replace('\\', "/").contains("share/photocraft"), "not the old install-directory location: {stored:?}");
+        assert!(storage_path_in(|_| None).is_none(), "no home directory, nowhere to store");
+    }
+
+    /// An activation an earlier version stored beside the installed files still counts after
+    /// the move to the home directory, so an activated machine is not asked again.
+    #[test]
+    fn an_activation_beside_the_program_is_moved_to_the_home_directory() {
+        let id = "test-machine-001";
+        // Both under the test's own temp folder; nothing touches the real home directory.
+        let root = std::env::temp_dir().join(format!("photocraft-activation-move-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let legacy = root.join("usr").join("share").join("photocraft").join(LICENSE_FILE);
+        let target = root.join("home").join(".photocraft").join(LICENSE_FILE);
+        std::fs::create_dir_all(legacy.parent().unwrap()).unwrap();
+        let ask = || status_migrating(Some(legacy.as_path()), &target, id);
+
+        assert!(matches!(ask(), Err(ActivationError::NotActivated)), "nothing stored yet");
+        assert!(!target.exists(), "no legacy file: no directory is created");
+
+        std::fs::write(&legacy, license_file_content(&activation_code(id))).unwrap();
+        assert!(ask().is_ok(), "the old file still activates");
+        assert!(target.is_file() && !legacy.exists(), "the code moved to the home directory");
+
+        // A file of another app, or with a code for another machine, never counts and is left alone.
+        let _ = std::fs::remove_dir_all(target.parent().unwrap());
+        std::fs::write(&legacy, "# other-app\n- 激活码: 富强-民主-文明-和谐\n").unwrap();
+        assert!(ask().is_err() && legacy.exists(), "another app's file is left where it is");
+        std::fs::write(&legacy, format!("# {APP_ID}\n- 激活码: 富强-民主-文明-和谐\n")).unwrap();
+        assert!(ask().is_err() && legacy.exists(), "a code for another machine is left where it is");
+
+        // An activation already in the home directory wins: the old file is not touched.
+        std::fs::write(&legacy, license_file_content(&activation_code(id))).unwrap();
+        std::fs::create_dir_all(target.parent().unwrap()).unwrap();
+        std::fs::write(&target, license_file_content(&activation_code(id))).unwrap();
+        assert!(ask().is_ok() && legacy.exists(), "the old file is left alone once the home directory has one");
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// Storing creates the user's directory when it does not exist yet (a fresh profile).
+    #[test]
+    fn storing_creates_the_directory() {
+        let root = std::env::temp_dir().join(format!("photocraft-activation-fresh-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let at = root.join(".photocraft").join(LICENSE_FILE);
+        let id = "test-machine-001";
+        activate_at(&at, id, &activation_code(id).render()).unwrap();
+        assert!(status_at(&at, id).is_ok());
+        assert!(std::fs::read_to_string(&at).unwrap().starts_with("# photocraft\n- 激活码: "), "the file format is unchanged");
+        let _ = std::fs::remove_dir_all(&root);
     }
 }

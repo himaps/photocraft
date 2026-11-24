@@ -382,6 +382,28 @@ on PRs that touch `packaging/freebsd/`, `freebsd.yml` or `release.yml`), so the 
 isn't the first place it runs. Locally, on any OS, `packaging/freebsd/package.sh --dry-run` stages the tree from stub binaries
 and lists the tarball, which checks the layout without a FreeBSD machine.
 
+### Tag release (this fork's installers)
+
+A pushed `v*` tag is what puts installers on the Releases page. Two workflows run on it:
+
+- `.github/workflows/tag-release.yml` builds the Windows x64 installer and portable zip and the
+  Linux aarch64 deb, rpm and tar.gz, then **publishes** the release `PhotoCraft <version>` with
+  them and `SHA256SUMS.txt` attached. It is published, not left a draft: only the repository's
+  admins can see a draft, so a draft shows the Releases page no download.
+- `.github/workflows/kylin-v10-sp1-deb.yml` (next section) attaches the Kylin debs to the same
+  release once its build is done, waiting up to two hours for the release to exist. Its
+  install-and-run check on a real Kylin is a guard, not a gate: when the check fails the debs
+  are still attached and the release notes carry a warning that says so.
+
+So, to release: `git tag -a v<version> -m "…" && git push origin v<version>`, then watch
+https://github.com/himaps/photocraft/actions. The release page is
+`https://github.com/himaps/photocraft/releases/tag/v<version>`. To rebuild a version, move the
+tag (`git tag -f … && git push --force origin v<version>`); both workflows replace their assets
+and keep the others'.
+
+The app itself does not check for updates over the network (Help ▸ Check for Updates says so),
+so readers learn of a new version from the Releases page.
+
 ### Kylin V10 SP1
 
 `.github/workflows/kylin-v10-sp1-deb.yml` builds the glibc-2.31-baseline debs for Kylin V10

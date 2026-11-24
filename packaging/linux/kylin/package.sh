@@ -93,9 +93,8 @@ mkdir -p "$STAGE/usr/share/icons"
 cp -R "$ROOT/assets/app-icon/hicolor" "$STAGE/usr/share/icons/"
 mkdir -p "$STAGE/usr/share/doc/photocraft"
 copy_docs "$STAGE/usr/share/doc/photocraft"
-# The activation gate reads its marker from <exe>/../share/photocraft/.license.md, which the
-# deb layout provides (/usr/share/photocraft). Nothing to stage: the file appears on first
-# activation.
+# The activation gate reads its marker from ~/.photocraft/.license.md (the user's own folder,
+# so activation needs no root). Nothing to stage: the file appears on first activation.
 
 if command -v desktop-file-validate >/dev/null 2>&1; then
   desktop-file-validate "$STAGE/usr/share/applications/$APP_ID.desktop"

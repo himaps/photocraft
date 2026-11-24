@@ -1,8 +1,32 @@
 //! Help ▸ Check for Updates and the check at startup, both driven by craft-update's `Updater`.
+//!
+//! This fork never checks for updates over the network: the update feed is the upstream
+//! project's GitHub releases, which is not where this fork's installers come from, and the
+//! request at start is one a security tool rightly asks about. The checker keeps its dialogs
+//! and its "last update" record, and answers every check with [`OFFLINE`] instead of reaching
+//! the network (see [`updater`]).
 
 use serde_json::Value;
 
 use crate::PhotocraftApp;
+
+/// What every update check answers on this fork: no release, and the reason.
+#[cfg(not(target_arch = "wasm32"))]
+const OFFLINE: &str = "This build does not check for updates over the network: new versions come from the project's releases page.";
+
+/// The check source this fork uses: answers [`OFFLINE`] and opens no connection. The framework
+/// reaches the network only when a checker has no source, so every checker gets this one.
+#[cfg(not(target_arch = "wasm32"))]
+fn offline_source() -> craft::update::updater::CheckSource {
+    std::sync::Arc::new(|| Err(OFFLINE.to_owned()))
+}
+
+/// The update checker, wired never to reach the network ([`offline_source`]). Every `Updater`
+/// the app builds goes through here.
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) fn updater() -> craft::update::updater::Updater {
+    craft::update::updater::Updater::new(&crate::UPDATE_APP, photocraft_engine::build_info::VERSION).with_source(offline_source())
+}
 
 /// The update checker's state (desktop); the web build has none.
 pub(crate) struct Runtime {
@@ -21,7 +45,7 @@ impl Default for Runtime {
     fn default() -> Self {
         Self {
             #[cfg(not(target_arch = "wasm32"))]
-            updater: craft::update::updater::Updater::new(&crate::UPDATE_APP, photocraft_engine::build_info::VERSION),
+            updater: updater(),
             #[cfg(not(target_arch = "wasm32"))]
             result_dialog: None,
             #[cfg(not(target_arch = "wasm32"))]
@@ -156,6 +180,45 @@ mod tests {
 
     fn app() -> Box<PhotocraftApp> {
         PhotocraftApp::new(Session::new(), Services::default())
+    }
+
+    /// Runs the app's per-pass update handling (`tick` then `show`, as a frame does) until the
+    /// checker's running check lands, then returns its status. The checker picks up its check
+    /// thread's answer in `show`, as in the app.
+    #[cfg(not(target_arch = "wasm32"))]
+    fn settled(app: &mut PhotocraftApp) -> craft::update::updater::Status {
+        use craft::update::updater::Status;
+        for _ in 0..200 {
+            tick(app);
+            show(app, &app.ctx().clone());
+            let status = app.updates_rt.updater.status().clone();
+            if !matches!(status, Status::Checking) {
+                return status;
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        app.updates_rt.updater.status().clone()
+    }
+
+    /// The app as shipped never reaches the network for updates. The framework opens a
+    /// connection only for a checker without a source; the app's checker is built with the
+    /// offline one, which answers without connecting.
+    #[test]
+    #[cfg(not(target_arch = "wasm32"))]
+    fn the_apps_checker_answers_offline_instead_of_connecting() {
+        use craft::update::updater::Status;
+        assert!(matches!(offline_source()(), Err(reason) if reason == OFFLINE));
+        let mut app = app();
+        // The check at start, with its preference on (the default): a quiet check that finds
+        // nothing stays quiet, so nothing shows and the status stays idle.
+        app.session.edit_prefs(|p| p.general.automatically_check_updates = true);
+        tick(&mut app);
+        assert_eq!(settled(&mut app), Status::Idle, "the check at start shows nothing");
+        assert!(!app.updates_rt.updater.prompt_open(), "no update prompt opens at start");
+        // Help ▸ Check for Updates: the result window says why there is no answer.
+        let ctx = app.ctx().clone();
+        menus::invoke(&mut app, &ctx, "help.checkForUpdates", serde_json::json!({})).unwrap();
+        assert_eq!(settled(&mut app), Status::Failed(OFFLINE.to_owned()), "a requested check reports the offline answer");
     }
 
     #[test]

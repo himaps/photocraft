@@ -11,6 +11,7 @@ use clap::CommandFactory;
 mod actions;
 mod args;
 mod automation;
+mod activation;
 mod batch;
 mod document;
 mod error;
@@ -57,6 +58,7 @@ where
         Command::Batch(a) => batch(a, out, err),
         Command::Droplet(a) => droplet(a, out, err),
         Command::Commands(a) => commands(a, out),
+        Command::Activation(a) => activation::activation(a, out),
         Command::Mcp(a) => mcp(a, err),
         Command::Serve(a) => serve(a, err),
     };

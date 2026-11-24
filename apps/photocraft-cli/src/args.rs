@@ -36,6 +36,7 @@ pub(crate) enum Command {
     Batch(BatchArgs),
     Droplet(DropletArgs),
     Commands(CommandsArgs),
+    Activation(ActivationArgs),
     Mcp(McpArgs),
     Serve(ServeArgs),
 }
@@ -268,6 +269,18 @@ pub(crate) struct CommandsArgs {
     /// Only the commands matching this text
     #[arg(long, value_name = "TEXT", allow_negative_numbers = true)]
     pub(crate) filter: Option<String>,
+}
+
+/// Print this machine's machine code, or answer machine-code words with their activation code
+///
+/// With no argument, prints this machine's machine code (the words its user sends to the
+/// author). With machine-code words (space or `-` separated), prints the activation code
+/// answering them — the author's side of the exchange (`photocraft-activation`).
+#[derive(Args)]
+pub(crate) struct ActivationArgs {
+    /// A machine code's words; absent, this machine's own code is printed
+    #[arg(value_name = "WORDS")]
+    pub(crate) words: Vec<String>,
 }
 
 /// Run the MCP server on stdio: in the open PhotoCraft window when the person lets agents use it

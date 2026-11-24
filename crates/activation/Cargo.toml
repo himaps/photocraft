@@ -3,7 +3,7 @@ name = "photocraft-activation"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "The local activation marker: machine code and activation code as words, stored beside the installed files"
+description = "The local activation marker: machine code and activation code as words, stored in the user's home directory"
 
 [lints]
 workspace = true

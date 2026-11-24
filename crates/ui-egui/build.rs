@@ -36,6 +36,9 @@ fn main() {
 
 /// The catalog this app reads in each locale: `locales/<locale>/photocraft.tsv`.
 const APP_CATALOG: &str = "photocraft.tsv";
+/// This fork's own catalog rows, one `<code>.tsv` per locale (the activation gate's), merged
+/// after the pinned craft-i18n catalog whatever `CRAFT_I18N_DIR` says.
+const FORK_CATALOG_DIR: &str = "fork-i18n";
 
 /// `CRAFT_I18N` from `CRAFT_I18N_DIR`: the `Embedded` list the craft-i18n crate reads.
 fn craft_i18n() -> String {
@@ -59,15 +62,54 @@ fn craft_i18n() -> String {
             Vec::new()
         }
     };
+    // The fork's rows ride along in every build: each locale's app catalog is the pinned
+    // craft-i18n catalog (when a checkout is embedded) with the fork's rows appended, or the
+    // fork's rows alone without one.
+    let fork = fork_locales();
+    let mut codes: Vec<&String> = entries.iter().map(|(code, _, _)| code).chain(fork.keys()).collect();
+    codes.sort();
+    codes.dedup();
     let mut o = String::from("/// (locale, shared catalog, PhotoCraft's catalog), one entry per locale; `\"\"` for a missing file.\n");
     o.push_str("pub static CRAFT_I18N: &craft_i18n::Embedded = &[\n");
-    for (code, shared, app) in entries {
+    for code in codes {
+        let external = entries.iter().find(|(c, _, _)| c == code).map(|(_, _, app)| app.as_path());
+        let fork = fork.get(code.as_str());
         // `{:?}` escapes the path (Windows backslashes) as a Rust string literal.
-        let shared = shared.map_or_else(|| "\"\"".to_string(), |p| format!("include_str!({p:?})"));
-        let _ = writeln!(o, "    ({code:?}, {shared}, include_str!({app:?})),");
+        let shared = entries
+            .iter()
+            .find(|(c, _, _)| c == code)
+            .and_then(|(_, shared, _)| shared.as_ref())
+            .map_or_else(|| "\"\"".to_string(), |p| format!("include_str!({p:?})"));
+        let app = match (external, fork) {
+            (Some(e), Some(f)) => format!(r#"concat!(include_str!({e:?}), "\n", include_str!({f:?}))"#),
+            (Some(e), None) => format!("include_str!({e:?})"),
+            (None, Some(f)) => format!("include_str!({f:?})"),
+            // Cannot happen: `code` came from one of the two collections.
+            (None, None) => continue,
+        };
+        let _ = writeln!(o, "    ({code:?}, {shared}, {app}),");
     }
     o.push_str("];\n");
     o
+}
+
+/// The fork's own catalogs: every `<code>.tsv` under [`FORK_CATALOG_DIR`], by code.
+fn fork_locales() -> std::collections::BTreeMap<String, std::path::PathBuf> {
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(FORK_CATALOG_DIR);
+    println!("cargo::rerun-if-changed={}", dir.display());
+    let mut out = std::collections::BTreeMap::new();
+    if let Ok(list) = std::fs::read_dir(&dir) {
+        for entry in list.flatten() {
+            let path = entry.path();
+            if path.extension().is_some_and(|e| e == "tsv")
+                && let Some(code) = path.file_stem().and_then(|n| n.to_str())
+            {
+                println!("cargo::rerun-if-changed={}", path.display());
+                out.insert(code.to_string(), path);
+            }
+        }
+    }
+    out
 }
 
 /// One embedded locale: its code, its `common.tsv` if it has one, and its PhotoCraft catalog.

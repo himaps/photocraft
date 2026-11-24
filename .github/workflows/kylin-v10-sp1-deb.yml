@@ -269,60 +269,86 @@ jobs:
 
   publish-release:
     name: Attach the packages to the tag's release
-    if: startsWith(github.ref, 'refs/tags/')
+    # On a tag, whenever the debs built. The install-and-run check on a real Kylin is a
+    # guard, not a gate: when it fails the debs are still attached (people can install them)
+    # and the release notes say the check failed, so nobody takes them for verified. The
+    # failed check stays visible on the Actions page.
+    if: always() && startsWith(github.ref, 'refs/tags/') && needs.build-deb.result == 'success'
     needs: [build-deb, verify-on-kylin]
     runs-on: ubuntu-latest
     steps:
-      - name: Download all artifacts
+      - name: Download the built packages
         uses: actions/download-artifact@v4
         with:
+          # The two packages' artifacts by name (the `-logs` artifacts of a failed build stay out).
+          pattern: photocraft-kylin-{amd64,aarch64}
           path: assets
           merge-multiple: true
 
-      - name: Create or update the release
+      - name: Attach the debs to the release
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           TAG_NAME: ${{ github.ref_name }}
+          VERIFY: ${{ needs.verify-on-kylin.result }}
         run: |
           set -e
-          cat > release_notes.md <<'EOF'
-          PhotoCraft for Kylin V10 SP1 (glibc 2.31 baseline), amd64 + aarch64.
-
-          - `photocraft-<version>-kylin-v10-sp1-<arch>.deb` — regular package; a desktop system provides
-            the runtime libraries the app loads at run time (X11/Wayland, xkbcommon, Vulkan/GL).
-          - `photocraft-<version>-kylin-v10-sp1-<arch>-offline.deb` — for minimal or offline machines:
-            bundles the runtime dependency closure. After `dpkg -i`, the installer runs
-            automatically when libraries are missing (10s delay, journalctl -u photocraft-deps),
-            or run `sudo /usr/share/photocraft/install-deps.sh` once.
-
-          Activation is a free local registration marker: the app asks once at startup
-          and stores the answer beside the installed files (`/usr/share/photocraft/.license.md`).
-
-          Requires glibc >= 2.31: Kylin V10 SP1 (Ubuntu 20.04 base), UOS/deepin desktops,
-          Debian 11+. Older systems are not supported — glibc cannot be bundled. The regular
-          distro packages (AppImage, deb, rpm) need a newer glibc and live in the main release.
-          EOF
-          # The shared Release workflow's draft-release step replaces *all* assets when it runs,
-          # so attach the Kylin debs only after the platform artifacts are present (draft-release
-          # has finished). Up to 120 min: the full multi-platform build is slower than Kylin.
-          echo "Waiting for the shared Release workflow to publish platform artifacts..."
+          {
+            echo "## Kylin V10 SP1 packages (glibc 2.31 baseline), x64 and aarch64"
+            echo
+            echo "- \`photocraft-${TAG_NAME#v}-kylin-v10-sp1-<arch>.deb\` — regular package; a desktop system provides"
+            echo "  the runtime libraries the app loads at run time (X11/Wayland, xkbcommon, Vulkan/GL)."
+            echo "- \`photocraft-${TAG_NAME#v}-kylin-v10-sp1-<arch>-offline.deb\` — for minimal or offline machines:"
+            echo "  bundles the runtime dependency closure. After \`dpkg -i\`, the installer runs"
+            echo "  automatically when libraries are missing (10s delay, journalctl -u photocraft-deps),"
+            echo "  or run \`sudo /usr/share/photocraft/install-deps.sh\` once."
+            echo
+            echo "Requires glibc >= 2.31: Kylin V10 SP1 (Ubuntu 20.04 base), UOS/deepin desktops,"
+            echo "Debian 11+. Older systems are not supported — glibc cannot be bundled."
+            if [ "$VERIFY" = "success" ]; then
+              echo
+              echo "_The x64 package was installed and run on a real Kylin V10 SP1 as part of this build._"
+            else
+              echo
+              echo "> [!WARNING]"
+              echo "> The install-and-run check on a real Kylin V10 SP1 did **not pass** in this build"
+              echo "> (see the Kylin V10 SP1 deb workflow run for this tag). The packages are provided as built."
+            fi
+          } > kylin_notes.md
+          # The tag-release workflow publishes the release; wait for it (up to two hours, the
+          # Windows and Linux builds are slower than this one). Should it have failed or not
+          # have run, publish the release with the Kylin packages alone rather than leave the
+          # tag without a download.
+          echo "Waiting for the tag's release to exist..."
           waited=0
-          while [ "$waited" -lt 240 ]; do
-            if gh release view "$TAG_NAME" --repo "$REPO" --json assets --jq '.assets[].name' 2>/dev/null \
-                 | grep -qv 'kylin'; then
-              echo "Platform artifacts detected; attaching Kylin debs."
+          until gh release view "$TAG_NAME" --repo "$REPO" >/dev/null 2>&1; do
+            if [ "$waited" -ge 240 ]; then
+              echo "No release appeared; creating it with the Kylin packages."
               break
             fi
             sleep 30
             waited=$((waited+1))
           done
           if gh release view "$TAG_NAME" --repo "$REPO" >/dev/null 2>&1; then
+            echo "Attaching the Kylin debs."
             gh release upload "$TAG_NAME" --repo "$REPO" --clobber assets/photocraft-*-kylin-*.deb
+            # The checksums list covers every attached file, the Kylin debs included: rebuild it
+            # from what the release now holds (this job ran after the others attached theirs).
+            rm -rf sums && mkdir sums
+            gh release download "$TAG_NAME" --repo "$REPO" --dir sums --pattern '*.msi' --pattern '*.zip' --pattern '*.deb' --pattern '*.rpm' --pattern '*.tar.gz'
+            ( cd sums && sha256sum -- * > ../SHA256SUMS.txt )
+            gh release upload "$TAG_NAME" --repo "$REPO" --clobber SHA256SUMS.txt
+            # Add this section to the notes once; a re-run replaces the old copy.
+            notes="$(gh release view "$TAG_NAME" --repo "$REPO" --json body --jq .body)"
+            notes="${notes%%$'\n'## Kylin V10 SP1 packages*}"
+            printf '%s\n\n%s\n' "$notes" "$(cat kylin_notes.md)" > notes.md
+            gh release edit "$TAG_NAME" --repo "$REPO" --notes-file notes.md
           else
-            gh release create "$TAG_NAME" --repo "$REPO" --draft \
+            ( cd assets && sha256sum -- photocraft-*-kylin-*.deb > ../SHA256SUMS.txt )
+            gh release create "$TAG_NAME" --repo "$REPO" \
               --title "PhotoCraft ${TAG_NAME#v}" \
-              --notes-file release_notes.md \
-              assets/photocraft-*-kylin-*.deb
+              --notes-file kylin_notes.md \
+              assets/photocraft-*-kylin-*.deb SHA256SUMS.txt
           fi
+          echo "Release page: https://github.com/$REPO/releases/tag/$TAG_NAME"
           ls -lh assets/

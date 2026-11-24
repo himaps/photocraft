@@ -24,7 +24,7 @@ fn main() {
     let lang = arg(&args, "--lang").unwrap_or_else(|| "en".to_owned());
 
     let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), Default::default());
-    app.session.prefs.edit(|prefs| prefs.interface.language = lang.clone().into());
+    app.session.prefs.edit(|prefs| prefs.interface.language = lang.clone());
     // The example bypasses `ui_frame`, which sets the interface language every frame: set it here.
     photocraft_ui_egui::i18n::set_current(photocraft_ui_egui::i18n::Lang::from_code(&lang).unwrap_or(photocraft_ui_egui::i18n::Lang::EN));
     let mut h = egui_kittest::Harness::builder()

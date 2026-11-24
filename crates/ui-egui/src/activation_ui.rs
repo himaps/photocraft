@@ -14,18 +14,26 @@
 //! feature on this crate), so the kittest suites and `cargo run` never see it.
 
 use crate::PhotocraftApp;
+// The screen below exists only in the shipped native gate; a development, test or wasm build
+// has neither the helpers nor what they draw.
+#[cfg(all(feature = "activation-gate", not(target_arch = "wasm32")))]
 use egui::{Align2, Color32, CornerRadius, FontFamily, FontId, Margin, Sense, Stroke, StrokeKind, Vec2, vec2};
 
 /// The card's width: ZCode's `max-w-lg` (32 rem).
+#[cfg(all(feature = "activation-gate", not(target_arch = "wasm32")))]
 const CARD_WIDTH: f32 = 512.0;
 /// The bare screen's card is a step narrower (`max-w-md`).
+#[cfg(all(feature = "activation-gate", not(target_arch = "wasm32")))]
 const BARE_CARD_WIDTH: f32 = 448.0;
 /// The input row's and the primary button's height (`h-11`).
+#[cfg(all(feature = "activation-gate", not(target_arch = "wasm32")))]
 const INPUT_H: f32 = 44.0;
 /// The brand red the typed activation code draws in: the app icon's letter red, sampled from
 /// the design (`#cb3149`).
+#[cfg(all(feature = "activation-gate", not(target_arch = "wasm32")))]
 const INPUT_INK: Color32 = Color32::from_rgb(0xCB, 0x31, 0x49);
 /// The mark's size (`size-12`): the app icon itself, drawn from the embedded 256 px tile.
+#[cfg(all(feature = "activation-gate", not(target_arch = "wasm32")))]
 const MARK_SIZE: f32 = 48.0;
 /// The app icon's 256 px tile (the same bytes the Linux hicolor theme and the window icon use).
 #[cfg(all(feature = "activation-gate", not(target_arch = "wasm32")))]
@@ -197,8 +205,9 @@ fn gate_native(app: &mut PhotocraftApp, ui: &mut egui::Ui) -> bool {
                 log::info!("activation stored ({} words)", code.len());
             }
             Err(ActivationError::Write(path, error)) => {
-                // The install directory is root-owned on Linux; the words are safe to quote
-                // (they come from the word table), so the exact command is shown.
+                // The file is the user's own (`~/.photocraft/.license.md`), so the fallback needs
+                // no administrator rights; the words are safe to quote (they come from the word
+                // table), so the exact command is shown.
                 let code = photocraft_activation::parse(&app.activation.typed)
                     .map(|c| c.render())
                     .unwrap_or_else(|_| app.activation.typed.trim().to_owned());
@@ -208,7 +217,7 @@ fn gate_native(app: &mut PhotocraftApp, ui: &mut egui::Ui) -> bool {
                     app,
                     tl!("To store the activation, run this in a terminal and restart:"),
                     vec![format!(
-                        "sudo mkdir -p \"$(dirname '{path}')\" && printf '%s\\n' '{code}' | sudo tee '{path}' >/dev/null",
+                        "mkdir -p \"$(dirname '{path}')\" && printf '# photocraft\\n- 激活码: {code}\\n' > '{path}'",
                         path = path,
                         code = code
                     )],
@@ -253,7 +262,7 @@ fn screen(ui: &mut egui::Ui, width: f32, body: impl FnOnce(&mut egui::Ui)) {
         // The card hugs its content and centres on the screen (ZCode: `items-center
         // justify-center`). The content height is only known after the pass, so this frame
         // centres on the previous pass's measurement (an estimate on the very first one).
-        let id = ui.id().with("gate-card-height");
+        let id = ui.scope_id().with("gate-card-height");
         let measured = ui.ctx().data_mut(|d| d.get_temp::<f32>(id).unwrap_or(if width == BARE_CARD_WIDTH { 240.0 } else { 700.0 }));
         ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
             ui.add_space(((full.height() - measured) / 2.0).max(24.0));

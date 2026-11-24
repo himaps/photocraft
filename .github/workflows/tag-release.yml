@@ -1,8 +1,9 @@
-# Tag release for the platforms this repo ships: Windows (x64, arm64) installers and
-# portable zips, plus Linux aarch64 (deb/rpm/tar.gz). macOS, Flatpak and Web are not built
-# here; the shared multi-platform Release workflow (release.yml) stays reserved for the
-# `release` branch. The Kylin V10 SP1 debs come from kylin-v10-sp1-deb.yml, whose
-# publish-release job waits for this workflow's draft release and then attaches the debs.
+# Tag release for the platforms this repo ships: Windows (x64) installers and portable zips,
+# plus Linux aarch64 (deb/rpm/tar.gz). macOS, Flatpak and Web are not built here; the shared
+# multi-platform Release workflow (release.yml) stays reserved for the `release` branch.
+# A pushed v* tag builds everything and publishes the release with the installers attached,
+# so the releases page lists the downloads. The Kylin V10 SP1 debs come from
+# kylin-v10-sp1-deb.yml, which attaches them to the same release.
 name: Tag release (Windows + Linux aarch64)
 
 on:
@@ -149,9 +150,12 @@ jobs:
           path: artifacts
           merge-multiple: true
 
-      # The Kylin workflow's publish-release job waits for a non-Kylin asset to appear here,
-      # then attaches its debs to this same release.
-      - name: Create or update the draft release
+      # The Kylin workflow's publish-release job attaches its debs to this same release once it
+      # exists. The release is published (not left a draft): a draft is visible to the
+      # repository's admins only, so the releases page would show no download for anyone else.
+      # It is created with its notes first and the assets follow as they upload, so the page is
+      # never replaced wholesale (which would drop the Kylin debs attached in between).
+      - name: Publish the tag's GitHub release with the installers
         working-directory: artifacts
         env:
           GH_TOKEN: ${{ github.token }}
@@ -160,12 +164,38 @@ jobs:
         run: |
           set -e
           sha256sum -- * > SHA256SUMS.txt
+          cat > release_notes.md <<EOF
+          PhotoCraft ${TAG_NAME#v}
+
+          Installers built from this tag. Pick the one for your system:
+
+          | System | File |
+          |---|---|
+          | Windows x64 installer | \`photocraft-${TAG_NAME#v}-windows-x64.msi\` |
+          | Windows x64, no install (unzip and run) | \`photocraft-${TAG_NAME#v}-windows-x64-portable.zip\` |
+          | Linux aarch64 (Debian/Ubuntu) | \`photocraft-${TAG_NAME#v}-linux-aarch64.deb\` |
+          | Linux aarch64 (Fedora/RHEL) | \`photocraft-${TAG_NAME#v}-linux-aarch64.rpm\` |
+          | Linux aarch64, no install | \`photocraft-${TAG_NAME#v}-linux-aarch64.tar.gz\` |
+          | Kylin V10 SP1, x64 / aarch64 | \`photocraft-${TAG_NAME#v}-kylin-v10-sp1-<arch>.deb\` (attached by the Kylin build once it finishes) |
+
+          \`SHA256SUMS.txt\` lists every attached file's checksum.
+
+          On first start the app asks for an activation code: send it the machine code it
+          shows, and enter the code you get back. The activation is stored in your home
+          folder (\`~/.photocraft/.license.md\`); nothing else is written outside it.
+          EOF
+          # The installers and their checksums, never the notes file itself.
+          assets=$(ls | grep -vx release_notes.md)
           if gh release view "$TAG_NAME" --repo "$REPO" >/dev/null 2>&1; then
-            echo "Release $TAG_NAME exists; replacing the Windows/Linux assets"
-            gh release upload "$TAG_NAME" --repo "$REPO" --clobber -- *
+            echo "Release $TAG_NAME exists; adding or replacing the Windows/Linux assets"
+            # shellcheck disable=SC2086 # the file list is meant to split
+            gh release upload "$TAG_NAME" --repo "$REPO" --clobber -- $assets
           else
-            echo "Creating draft release $TAG_NAME"
-            gh release create "$TAG_NAME" --repo "$REPO" --draft \
-              --title "PhotoCraft ${TAG_NAME#v}" --generate-notes -- *
+            echo "Publishing release $TAG_NAME"
+            # shellcheck disable=SC2086 # the file list is meant to split
+            gh release create "$TAG_NAME" --repo "$REPO" \
+              --title "PhotoCraft ${TAG_NAME#v}" \
+              --notes-file release_notes.md -- $assets
           fi
+          echo "Release page: https://github.com/$REPO/releases/tag/$TAG_NAME"
           ls -lh
