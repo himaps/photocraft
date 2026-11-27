@@ -125,6 +125,25 @@ jobs:
           git -C /tmp/craft-fonts checkout -q --detach FETCH_HEAD
           echo "CRAFT_FONTS_DIR=/tmp/craft-fonts" >> "$GITHUB_ENV"
 
+      - name: Clone craft-i18n (pinned via craft-i18n.rev, so the debs embed the translations)
+        run: |
+          set -e
+          REV=$(tr -cd '0-9a-f' < craft-i18n.rev)
+          [ -n "$REV" ] || { echo "craft-i18n.rev is empty or unreadable" >&2; exit 1; }
+          git init -q /tmp/craft-i18n
+          git -C /tmp/craft-i18n remote add origin https://github.com/storytold/craft-i18n.git
+          for attempt in 1 2 3; do
+            if git -C /tmp/craft-i18n fetch -q --depth 1 origin "$REV"; then
+              break
+            fi
+            echo "craft-i18n fetch failed (attempt $attempt), retrying in 20s" >&2
+            [ "$attempt" = "3" ] && exit 1
+            sleep 20
+          done
+          git -C /tmp/craft-i18n checkout -q --detach FETCH_HEAD
+          echo "CRAFT_I18N_DIR=/tmp/craft-i18n" >> "$GITHUB_ENV"
+          echo "CRAFT_I18N_REQUIRED=1" >> "$GITHUB_ENV"
+
       - name: Build and package
         run: |
           set -o pipefail

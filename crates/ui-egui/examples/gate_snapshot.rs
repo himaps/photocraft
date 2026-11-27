@@ -37,19 +37,31 @@ fn main() {
     // The machine code renders as words of the activation table, which is Chinese-derived; the
     // shipped build draws it with the craft fonts, which a dev checkout has none of. Best effort:
     // add a platform CJK font when one exists, so the snapshot shows the real words.
+    // The machine code renders as words of the activation table, which is Chinese-derived; the
+    // shipped build draws them with the craft fonts. By default this matches a release: only the
+    // embedded craft fonts (system font fallback is off). `--system-font` additionally adds a
+    // platform CJK face, to see how the gate looks when one is present.
     #[cfg(target_os = "windows")]
-    for file in ["msyh.ttc", "Deng.ttf", "simsun.ttc"] {
-        let Ok(font) = std::fs::read(format!("C:/Windows/Fonts/{file}")) else { continue };
-        let mut fonts = egui::FontDefinitions::default();
-        fonts.font_data.insert("cjk".to_owned(), std::sync::Arc::new(egui::FontData::from_owned(font)));
-        for family in [egui::FontFamily::Proportional, egui::FontFamily::Monospace] {
-            fonts.families.entry(family).or_default().push("cjk".to_owned());
+    if arg(&args, "--system-font").is_some() {
+        for file in ["msyh.ttc", "Deng.ttf", "simsun.ttc"] {
+            let Ok(font) = std::fs::read(format!("C:/Windows/Fonts/{file}")) else { continue };
+            let mut fonts = egui::FontDefinitions::default();
+            fonts.font_data.insert("cjk".to_owned(), std::sync::Arc::new(egui::FontData::from_owned(font)));
+            for family in [egui::FontFamily::Proportional, egui::FontFamily::Monospace] {
+                fonts.families.entry(family).or_default().push("cjk".to_owned());
+            }
+            h.ctx.set_fonts(fonts);
+            break;
         }
-        h.ctx.set_fonts(fonts);
-        break;
     }
     h.run_steps(4);
     let image = h.render().expect("the gate renders");
     image.save(&out).expect("the gate PNG writes");
     println!("{} ({} × {}, interface language {lang})", out, width, height);
+
+    // Diagnostics: whether this build embedded the craft-i18n catalogs (the language can only
+    // switch when it did). The chip geometry is read from the PNG itself.
+    if args.iter().any(|a| a == "--diag") {
+        println!("--diag-- i18n catalogs embedded: {}", photocraft_ui_egui::i18n::catalogs_embedded());
+    }
 }

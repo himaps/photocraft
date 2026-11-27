@@ -156,9 +156,13 @@ fn gate_native(app: &mut PhotocraftApp, ui: &mut egui::Ui) -> bool {
                     .frame(egui::Frame::NONE),
             )
         });
-        input.response.request_focus();
-        // Enter submits, as on ZCode's gate.
-        if input.response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+        // `input.inner` is the text edit's own response; `input.response` is the frame's. Focusing
+        // the frame keeps the edit out of its text mode, so the field would take no Chinese IME
+        // input and no paste — the field itself must hold the focus.
+        let field = input.inner;
+        field.request_focus();
+        // Enter in the field submits, as on ZCode's gate.
+        if field.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
             activate = true;
         }
         ui.add_space(8.0);
