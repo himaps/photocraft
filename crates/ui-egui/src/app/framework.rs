@@ -615,14 +615,27 @@ pub(crate) struct HeldStates {
     pub(crate) states: Tracked<CommandStates>,
 }
 
-/// The tool commands: the current tool's row is checked.
+/// The tool commands: the current tool's row is checked. Each row's `title` is the tool name in the
+/// interface language: the tool rail (tooltip, flyout, a11y) shows a command's `title` in place of its
+/// static `#[command]` label, which the framework draws without translating — so without it the toolbox
+/// buttons stay English even when their names have a catalog row (the menu translates these separately).
 fn build_tool_states(app: &PhotocraftApp) -> SourceStates {
-    Tool::ALL.iter().map(|&tool| (CommandRef::from(crate::panels::tool_commands::command_of(tool)), CommandState::new().checked(app.ui.tool == tool))).collect()
+    let lang = i18n::Lang::from_pref(&app.session.prefs().interface.language);
+    Tool::ALL.iter().map(|&tool| {
+        let id = crate::tool_shortcuts::id(tool);
+        let title = i18n::tr_id(lang, &id, tool.label()).to_string();
+        (
+            CommandRef::from(crate::panels::tool_commands::command_of(tool)),
+            CommandState::new().checked(app.ui.tool == tool).title(title),
+        )
+    }).collect()
 }
 
-/// [`build_tool_states`], derived from the tool.
+/// [`build_tool_states`], derived from the tool and the interface language (the rows carry translated
+/// titles, which move with it).
 fn tool_states(app: &PhotocraftApp, name: &'static str) -> Arc<SourceStates> {
-    derived_states(app, name, &(app.ui.tool as u64), || build_tool_states(app))
+    let lang = i18n::Lang::from_pref(&app.session.prefs().interface.language).code();
+    derived_states(app, name, &((app.ui.tool as u64), lang), || build_tool_states(app))
 }
 
 /// Brings the held states up to date for the coming frame. A source whose states are the `Arc` it last gave costs a
